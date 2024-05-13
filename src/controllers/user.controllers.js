@@ -3,11 +3,6 @@ import { ApiError } from "../utils/apiError.js";
 import { User } from "../models/user.models.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/apiResponse.js";
-import {
-  isPasswordCorrect,
-  generateAccessToken,
-  generateRefreshToken,
-} from "../models/user.models.js";
 
 const generateAccessAndRefreshToken = async (userID) => {
   try {
@@ -82,14 +77,14 @@ const registeruser = asyncHandler(async (req, res) => {
   ) {
     localAvatarPath = req.files.avatar[0].path;
     // console.log(req.files.avatar); // it shows all the predifened keys with values whih multer creates in the form of object
-    // fieldname: 'avatar',
-    // originalname: 'avatar.jpg',
-    // encoding: '7bit',
-    // mimetype: 'image/jpeg',
-    // destination: './public/temp',
-    // filename: 'avatar.jpg',
-    // path: 'public\\temp\\avatar.jpg',
-    // size: 102278
+    // fieldname
+    // originalname
+    // encoding
+    // mimetype
+    // destination
+    // filename
+    // path
+    // size
   } else {
     throw new ApiError(400, "Avatar is mandatory");
   }
@@ -143,21 +138,21 @@ const registeruser = asyncHandler(async (req, res) => {
 const loginuser = asyncHandler(async (req, res) => {
   const { userName, email, password } = req.body;
 
-  if (!userName || !email) {
+  if (!(userName || email)) {
     throw new ApiError(400, "Username or Email required!");
   }
 
-  const user = User.findOne({
-    $or: [userName, email],
+  const user = await User.findOne({
+    $or: [{ userName }, { email }],
   });
 
   if (!user) {
     throw new ApiError(404, "User does not exists");
   }
 
-  const passwordValid = await user.isPasswordCorrect(password);
+  const isPasswordValid = await user.isPasswordCorrect(password);
 
-  if (!passwordValid) {
+  if (!isPasswordValid) {
     throw new ApiError(401, "invalid user credentials");
   }
 
@@ -165,7 +160,9 @@ const loginuser = asyncHandler(async (req, res) => {
     user._id
   );
 
-  const loggedInUser = User.findOne(user._id).select("-password -refreshToken");
+  const loggedInUser = await User.findOne(user._id).select(
+    "-password -refreshToken"
+  );
 
   const options = {
     httpOnly: true,
@@ -195,8 +192,8 @@ const logoutuser = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(
     req.user._id,
     {
-      $set: {
-        refreshToken: undefined,
+      $unset: {
+        refreshToken: 1,
       },
     },
     {
@@ -211,8 +208,8 @@ const logoutuser = asyncHandler(async (req, res) => {
 
   res
     .status(200)
-    .clearCookie(accessToken, options)
-    .clearCookie(refreshToken, options)
-    .json(200, {}, "User Logged Out Succesfully");
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new ApiResponse(200, {}, "User Logged Out Succesfully"));
 });
 export { registeruser, loginuser, logoutuser };
