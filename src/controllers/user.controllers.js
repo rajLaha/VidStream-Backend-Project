@@ -49,9 +49,27 @@ const registeruser = asyncHandler(async (req, res) => {
     throw new ApiError(409, "This User Name is already take by another one");
   }
 
-  const localAvatarPath = req.files?.avatar[0]?.path;
-
+  let localAvatarPath;
   let localCoverImagePath;
+
+  if (
+    req.files &&
+    Array.isArray(req.files.avatar) &&
+    req.files.avatar.length > 0
+  ) {
+    localAvatarPath = req.files.avatar[0].path;
+    // console.log(req.files.avatar); // it shows all the predifened keys with values whih multer creates in the form of object
+    // fieldname: 'avatar',
+    // originalname: 'avatar.jpg',
+    // encoding: '7bit',
+    // mimetype: 'image/jpeg',
+    // destination: './public/temp',
+    // filename: 'avatar.jpg',
+    // path: 'public\\temp\\avatar.jpg',
+    // size: 102278
+  } else {
+    throw new ApiError(400, "Avatar is mandatory");
+  }
 
   if (
     req.files &&
@@ -59,10 +77,6 @@ const registeruser = asyncHandler(async (req, res) => {
     req.files.coverImage.length > 0
   ) {
     localCoverImagePath = req.files.coverImage[0].path;
-  }
-
-  if (!localAvatarPath) {
-    throw new ApiError(400, "Avatar is mandatory");
   }
 
   const avatar = await uploadOnCloudinary(localAvatarPath);
