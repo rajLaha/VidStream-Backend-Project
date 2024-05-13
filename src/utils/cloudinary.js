@@ -1,8 +1,5 @@
 import { v2 as cloudinary } from "cloudinary";
-import { log } from "console";
-import exp from "constants";
 import fs from "fs";
-import { loadEnvFile } from "process";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -12,17 +9,38 @@ cloudinary.config({
 
 const uploadOnCloudinary = async (localFilePath) => {
   try {
-    if (!localFilePath) return null;
+    if (!localFilePath) return null; // if localfilepath is not get then it simply returns the null
 
-    const response = await cloudinary.uploader.upload(loadEnvFile, {
+    const response = await cloudinary.uploader.upload(localFilePath, {
       resource_type: "auto",
-    });
-    //   file has been upload succesfully
+    }); // file has been upload succesfully
     console.log(`file is uploaded on cloudinary ${response.url}`);
+    fs.unlinkSync(localFilePath);
+    // console.log(response);
+    // with response we get all the key and values in format of objects 
+    // asset_id
+    // public_id
+    // version
+    // version_id
+    // signature
+    // width
+    // height
+    // format
+    // resource_type
+    // created_at
+    // tags
+    // bytes
+    // type
+    // etag
+    // placeholder
+    // url
+    // secure_url
+    // folder
+    // original_filename
+    // api_key
     return response;
   } catch (error) {
-    fs.unlink(localFilePath);
-    // remove the locally saved temporary as the uploaded operation gets failed
+    fs.unlink(localFilePath); // remove the locally saved temporary as the uploaded operation gets failed
     return null;
   }
 };

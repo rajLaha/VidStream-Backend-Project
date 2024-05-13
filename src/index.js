@@ -4,7 +4,7 @@ import { app } from "./app.js";
 const port = process.env.PORT || 3000;
 
 dotnev.config({
-  path: `./env`,
+  path: `./.env`,
 });
 
 dbConnection()
