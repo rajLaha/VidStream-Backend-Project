@@ -7,6 +7,7 @@ import {
 } from "../controllers/user.controllers.js";
 import { upload } from "../middlewares/multer.middlewares.js";
 import { verifyJWT } from "../middlewares/auth.middlewares.js";
+import { changeCurrentPassword } from "../controllers/user.controllers.js";
 
 const router = Router();
 
@@ -30,5 +31,7 @@ router.route("/login").post(loginuser);
 router.route("/logout").post(verifyJWT, logoutuser);
 
 router.route("/refresh-token").post(refreshAccessToken);
+
+router.route("/change-password").post(verifyJWT, changeCurrentPassword);
 
 export default router;

@@ -266,5 +266,79 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
 // subscription model
 
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+  const { oldPassword, newPassword, confirmPassword } = req.body;
 
-export { registeruser, loginuser, logoutuser, refreshAccessToken };
+  if (!(oldPassword || newPassword || confirmPassword)) {
+    throw ApiError(404, "All Fields are required");
+  }
+
+  if (!(newPassword === oldPassword)) {
+    throw ApiError(
+      404,
+      "Confirm Password is not matched with the new Password"
+    );
+  }
+
+  const user = await User.findById(req.user?._id);
+  const isPasswordCorrect = user.isPasswordCorrect(oldPassword);
+
+  if (!isPasswordCorrect) {
+    throw ApiError(400, "Invalid old password");
+  }
+
+  user.password = newPassword;
+  await User.save({
+    validateBeforeSave: false,
+  });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Password change Succesfully"));
+});
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+  res
+    .status(200)
+    .json(
+      new ApiResponse(200, req.user, "fetched current user data succesfully")
+    );
+});
+
+const updateAccountDetails = asyncHandler(async (req, res) => {
+  const { fullName, email } = req.body;
+
+  if (!(fullName || email)) {
+    throw new ApiError(404, "at least one fields is required");
+  }
+
+  const user = await User.findById(req.user?._id).select("-password");
+
+  if (fullName) {
+    user.fullName = fullName;
+    await User.save({
+      validateBeforeSave: false,
+    });
+  }
+
+  if (email) {
+    user.email = email;
+    await User.save({
+      validateBeforeSave: false,
+    });
+  }
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, { user }, "account update succesfully"));
+});
+
+export {
+  registeruser,
+  loginuser,
+  logoutuser,
+  refreshAccessToken,
+  changeCurrentPassword,
+  getCurrentUser,
+  updateAccountDetails,
+};
