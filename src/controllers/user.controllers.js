@@ -264,4 +264,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   }
 });
 
+// subscription model
+
+
 export { registeruser, loginuser, logoutuser, refreshAccessToken };
