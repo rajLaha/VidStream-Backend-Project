@@ -216,7 +216,7 @@ const logoutuser = asyncHandler(async (req, res) => {
 
 // Refresh Access Token code
 
-fconst refreshAccessToken = asyncHandler(async (req, res) => {
+const refreshAccessToken = asyncHandler(async (req, res) => {
   const incomingRefreshToken =
     req.cookies.refreshToken || req.body.refreshToken;
 
