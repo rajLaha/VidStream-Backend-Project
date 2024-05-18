@@ -403,7 +403,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     },
     {
       $lookup: {
-        from: "subscriptions", // maybe subscription
+        from: "subscriptions",
         localField: "_id",
         foreignField: "channel",
         as: "subscribers",
