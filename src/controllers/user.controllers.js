@@ -272,10 +272,10 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
     throw ApiError(404, "All Fields are required");
   }
 
-  if (!(newPassword === oldPassword)) {
+  if (!(newPassword === confirmPassword)) {
     throw ApiError(
       404,
-      "Confirm Password is not matched with the new Password"
+      "New Password is not matched with the Confirm Password"
     );
   }
 
@@ -287,7 +287,7 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
   }
 
   user.password = newPassword;
-  await User.save({
+  await user.save({
     validateBeforeSave: false,
   });
 
@@ -307,7 +307,7 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 const updateAccountDetails = asyncHandler(async (req, res) => {
   const { fullName, email } = req.body;
 
-  if (!(fullName || email)) {
+  if (!fullName && !email) {
     throw new ApiError(404, "at least one fields is required");
   }
 
@@ -315,14 +315,14 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 
   if (fullName) {
     user.fullName = fullName;
-    await User.save({
+    await user.save({
       validateBeforeSave: false,
     });
   }
 
   if (email) {
     user.email = email;
-    await User.save({
+    await user.save({
       validateBeforeSave: false,
     });
   }
