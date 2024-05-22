@@ -346,6 +346,11 @@ const deleteAvatar = asyncHandler(async (req, res) => {
     throw new ApiError(401, "can not find avatar");
   }
 
+  user.avatar = "";
+  await user.save({
+    validateBeforeSave: false,
+  });
+
   return res
     .status(200)
     .json(new ApiResponse(200, {}, "avatar delete succesfully"));
@@ -364,6 +369,11 @@ const deleteCoverImage = asyncHandler(async (req, res) => {
   if (!delCoverImage) {
     throw new ApiError(401, "can not find Cover Image");
   }
+
+  user.avatar = "";
+  await user.save({
+    validateBeforeSave: false,
+  });
 
   return res
     .status(200)
@@ -406,8 +416,9 @@ const updateAvatar = asyncHandler(async (req, res) => {
 });
 
 const updateCoverImage = asyncHandler(async (req, res) => {
-
-  const checkCoverImage = await User.findById(req.user?._id).select("-password");
+  const checkCoverImage = await User.findById(req.user?._id).select(
+    "-password"
+  );
   const isCoverImageAvailable = await checkCoverImage.coverImage;
   if (isCoverImageAvailable) {
     await deleteOnCloudinary(isCoverImageAvailable);
