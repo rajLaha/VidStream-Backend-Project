@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
 import { User } from "../models/user.models.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { uploadOnCloudinary, deleteOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
@@ -332,6 +332,27 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, user, "account update succesfully"));
 });
 
+const deleteAvatar = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user?._id).select("-password");
+  if(!user){
+    throw new ApiError(401, "unauthorized user access");
+  }
+
+  const avatar = await user.avatar;
+  console.log(avatar);
+
+  const delAvatar = await deleteOnCloudinary(avatar);
+
+  if(!delAvatar){
+    throw new ApiError(401, "can not find avatar")
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "avatar delete succesfully"));
+
+});
+
 const updateAvatar = asyncHandler(async (req, res) => {
   const newAvatarLocalPath = req.file?.path;
   if (!newAvatarLocalPath) {
@@ -521,6 +542,7 @@ export {
   changeCurrentPassword,
   getCurrentUser,
   updateAccountDetails,
+  deleteAvatar,
   updateAvatar,
   updateCoverImage,
   getUserChannelProfile,

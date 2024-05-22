@@ -17,7 +17,7 @@ const uploadOnCloudinary = async (localFilePath) => {
     console.log(`file is uploaded on cloudinary ${response.url}`);
     fs.unlinkSync(localFilePath);
     // console.log(response);
-    // with response we get all the key and values in format of objects 
+    // with response we get all the key and values in format of objects
     // asset_id
     // public_id
     // version
@@ -45,4 +45,21 @@ const uploadOnCloudinary = async (localFilePath) => {
   }
 };
 
-export { uploadOnCloudinary };
+const deleteOnCloudinary = async (cloudinaryUrl) => {
+  try {
+    if (!cloudinaryUrl) return null;
+
+    const splitSlash = cloudinaryUrl.split("/");
+    const endValue = splitSlash.length - 1;
+    const olderImage = splitSlash[endValue];
+    const splitDot = olderImage.split(".");
+    const actualOlderImageName = splitDot[0];
+
+    const response = await cloudinary.uploader.destroy(actualOlderImageName);
+    return response;
+  } catch (error) {
+    return null;
+  }
+};
+
+export { uploadOnCloudinary, deleteOnCloudinary };
