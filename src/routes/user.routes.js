@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   deleteAvatar,
+  deleteCoverImage,
   getCurrentUser,
   getUserChannelProfile,
   getWatchHistory,
@@ -47,6 +48,8 @@ router.route("/current-user").get(verifyJWT, getCurrentUser);
 router.route("/update-account").patch(verifyJWT, updateAccountDetails);
 
 router.route("/delete-avatar").get(verifyJWT, deleteAvatar );
+
+router.route("/delete-cover-image").get(verifyJWT, deleteCoverImage );
 
 router.route("/avatar").patch(verifyJWT, upload.single("avatar"), updateAvatar);
 
