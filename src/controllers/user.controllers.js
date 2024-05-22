@@ -334,23 +334,40 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 
 const deleteAvatar = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user?._id).select("-password");
-  if(!user){
+  if (!user) {
     throw new ApiError(401, "unauthorized user access");
   }
 
   const avatar = await user.avatar;
-  console.log(avatar);
 
   const delAvatar = await deleteOnCloudinary(avatar);
 
-  if(!delAvatar){
-    throw new ApiError(401, "can not find avatar")
+  if (!delAvatar) {
+    throw new ApiError(401, "can not find avatar");
   }
 
   return res
     .status(200)
-    .json(new ApiResponse(200, user, "avatar delete succesfully"));
+    .json(new ApiResponse(200, {}, "avatar delete succesfully"));
+});
 
+const deleteCoverImage = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user?._id).select("-password");
+  if (!user) {
+    throw new ApiError(401, "unauthorized user access");
+  }
+
+  const coverImage = await user.coverImage;
+
+  const delCoverImage = await deleteOnCloudinary(coverImage);
+
+  if (!delCoverImage) {
+    throw new ApiError(401, "can not find Cover Image");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "cover-image delete succesfully"));
 });
 
 const updateAvatar = asyncHandler(async (req, res) => {
@@ -543,6 +560,7 @@ export {
   getCurrentUser,
   updateAccountDetails,
   deleteAvatar,
+  deleteCoverImage,
   updateAvatar,
   updateCoverImage,
   getUserChannelProfile,
