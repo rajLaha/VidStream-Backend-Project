@@ -371,6 +371,12 @@ const deleteCoverImage = asyncHandler(async (req, res) => {
 });
 
 const updateAvatar = asyncHandler(async (req, res) => {
+  const checkAvatar = await User.findById(req.user?._id).select("-password");
+  const isAvatarAvailable = await checkAvatar.avatar;
+  if (isAvatarAvailable) {
+    await deleteOnCloudinary(isAvatarAvailable);
+  }
+
   const newAvatarLocalPath = req.file?.path;
   if (!newAvatarLocalPath) {
     throw new ApiError(400, "Avatar is required");
@@ -400,6 +406,13 @@ const updateAvatar = asyncHandler(async (req, res) => {
 });
 
 const updateCoverImage = asyncHandler(async (req, res) => {
+
+  const checkCoverImage = await User.findById(req.user?._id).select("-password");
+  const isCoverImageAvailable = await checkCoverImage.coverImage;
+  if (isCoverImageAvailable) {
+    await deleteOnCloudinary(isCoverImageAvailable);
+  }
+
   const newCoverImageLocalPath = req.file?.path;
   if (!newCoverImageLocalPath) {
     throw new ApiError(400, "Cover Image is required");
