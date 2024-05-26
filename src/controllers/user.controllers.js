@@ -333,6 +333,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 });
 
 const deleteAvatar = asyncHandler(async (req, res) => {
+
   const user = await User.findById(req.user?._id).select("-password");
   if (!user) {
     throw new ApiError(401, "unauthorized user access");
@@ -370,7 +371,7 @@ const deleteCoverImage = asyncHandler(async (req, res) => {
     throw new ApiError(401, "can not find Cover Image");
   }
 
-  user.avatar = "";
+  user.coverImage = "";
   await user.save({
     validateBeforeSave: false,
   });
