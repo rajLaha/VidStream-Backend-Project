@@ -5,7 +5,12 @@ import { Video } from "../models/video.models.js";
 import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { getVideoDuration, uploadOnCloudinary } from "../utils/cloudinary.js";
+import {
+  deleteOnCloudinary,
+  deleteVideoOnCloudinary,
+  getVideoDuration,
+  uploadOnCloudinary,
+} from "../utils/cloudinary.js";
 
 const getAllVideos = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
@@ -16,7 +21,6 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
 const publishAVideo = asyncHandler(async (req, res) => {
   const { title, description } = req.body;
-  // TODO: get video, upload to cloudinary, create video
   if (!title) {
     throw new ApiError(400, "Title is Necessary");
   }
@@ -88,7 +92,33 @@ const updateVideo = asyncHandler(async (req, res) => {
 
 const deleteVideo = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
-  //TODO: delete video
+  if (!videoId) {
+    throw new ApiError(404, "unauthorrized user access");
+  }
+  const video = await Video.findById(videoId);
+  if (!video) {
+    throw new ApiError(404, "Video not found");
+  }
+  const videoUrl = await video.videoFile;
+  const thumbnailUrl = await video.thumbnail;
+  const deleteVideo = await deleteVideoOnCloudinary(videoUrl);
+  const deleteThumbnail = await deleteOnCloudinary(thumbnailUrl);
+
+  if (!deleteVideo) {
+    throw new ApiError(401, "Can not find Video");
+  }
+
+  if (!deleteThumbnail) {
+    throw new ApiError(401, "Can not find Thumbnail");
+  }
+
+  await Video.deleteOne({
+    videoId: videoId,
+  });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Video Delete Succcesfully"));
 });
 
 const togglePublishStatus = asyncHandler(async (req, res) => {

@@ -77,4 +77,29 @@ const getVideoDuration = async (publicId) => {
   }
 };
 
-export { uploadOnCloudinary, deleteOnCloudinary, getVideoDuration };
+const deleteVideoOnCloudinary = async (videoUrl) => {
+  try {
+    if (!videoUrl) return null;
+
+    const splitUrl = videoUrl.split("/");
+    const endValue = splitUrl.length - 1;
+    const video = splitUrl[endValue];
+    const dotSplit = video.split(".");
+    const actualVideoName = dotSplit[0];
+
+    const response = await cloudinary.api.delete_resources(actualVideoName, {
+      resource_type: "video",
+    });
+
+    return response;
+  } catch (error) {
+    return null;
+  }
+};
+
+export {
+  uploadOnCloudinary,
+  deleteOnCloudinary,
+  getVideoDuration,
+  deleteVideoOnCloudinary,
+};
