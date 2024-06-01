@@ -3,11 +3,6 @@ import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const videoSchema = new Schema(
   {
-    videoId: {
-      type: String,
-      required: true,
-    },
-
     videoFile: {
       type: String, // couldinary url
       required: true,

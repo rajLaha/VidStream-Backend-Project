@@ -54,7 +54,6 @@ const publishAVideo = asyncHandler(async (req, res) => {
   const duration = await getVideoDuration(videoFile.public_id);
 
   const video = await Video.create({
-    videoId: "1",
     title,
     description,
     videoFile: videoFile.url,
@@ -63,21 +62,9 @@ const publishAVideo = asyncHandler(async (req, res) => {
     owner: req.user?._id,
   });
 
-  const videoId = await Video.findByIdAndUpdate(
-    video._id,
-    {
-      $set: {
-        videoId: video._id,
-      },
-    },
-    {
-      new: true,
-    }
-  );
-
   return res
     .status(200)
-    .json(new ApiResponse(200, videoId, "Video upload succesfully"));
+    .json(new ApiResponse(200, video, "Video upload succesfully"));
 });
 
 const getVideoById = asyncHandler(async (req, res) => {
@@ -87,7 +74,38 @@ const getVideoById = asyncHandler(async (req, res) => {
 
 const updateVideo = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
-  //TODO: update video details like title, description, thumbnail
+  const video = await Video.findById(videoId);
+  // console.log(video);
+  const { title, description } = req.body;
+
+  if (!title && !description) {
+    throw new ApiError(404, "At least one field is required");
+  }
+
+  if (title) {
+    video.title = title;
+    await video.save();
+  }
+
+  if (description) {
+    video.description = description;
+    await video.save();
+  }
+
+  const newThumbnail = req.file?.path;
+
+  if (newThumbnail) {
+    if (video.thumbnail) {
+      await deleteOnCloudinary(video.thumbnail);
+    }
+    const thumbnail = await uploadOnCloudinary(newThumbnail);
+    video.thumbnail = thumbnail.url;
+    video.save();
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, video, "Video updated succesfully"));
 });
 
 const deleteVideo = asyncHandler(async (req, res) => {
@@ -113,7 +131,7 @@ const deleteVideo = asyncHandler(async (req, res) => {
   }
 
   await Video.deleteOne({
-    videoId: videoId,
+    _id: videoId,
   });
 
   return res
