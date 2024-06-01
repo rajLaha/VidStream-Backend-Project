@@ -1,5 +1,6 @@
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
+import { ApiError } from "./apiError.js";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -62,4 +63,18 @@ const deleteOnCloudinary = async (cloudinaryUrl) => {
   }
 };
 
-export { uploadOnCloudinary, deleteOnCloudinary };
+const getVideoDuration = async (publicId) => {
+  try {
+    const result = await cloudinary.api.resource(publicId, {
+      resource_type: "video",
+      media_metadata: true,
+    });
+
+    return result.duration;
+  } catch (error) {
+    console.log("error facing while get video duration");
+    throw new ApiError(400, "error while get video duration on cloudinary");
+  }
+};
+
+export { uploadOnCloudinary, deleteOnCloudinary, getVideoDuration };
