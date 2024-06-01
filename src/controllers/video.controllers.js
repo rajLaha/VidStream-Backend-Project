@@ -69,7 +69,21 @@ const publishAVideo = asyncHandler(async (req, res) => {
 
 const getVideoById = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
-  //TODO: get video by id
+  if (!videoId) {
+    throw new ApiError(401, "Unauthorized user access");
+  }
+
+  const video = await Video.findById(videoId);
+
+  if (!video) {
+    throw new ApiError(404, "Video Not Found");
+  }
+
+  const videoUrl = video.videoFile;
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, videoUrl, "Video Fetched Succesfully"));
 });
 
 const updateVideo = asyncHandler(async (req, res) => {
