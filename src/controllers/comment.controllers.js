@@ -47,7 +47,33 @@ const addComment = asyncHandler(async (req, res) => {
 });
 
 const updateComment = asyncHandler(async (req, res) => {
-  // TODO: update a comment
+  const { commentId } = req.params;
+  const comment = await Comment.findById(commentId);
+  if (!commentId) {
+    throw new ApiError(401, "Unauthorized User Access");
+  }
+
+  const { newComment } = req.body;
+
+  if (!newComment) {
+    throw new ApiError(400, "Comment is required");
+  }
+
+  const user = req.user?._id.toString();
+  const commentIdOwner = comment.owner.toString();
+
+  console.log(user, commentIdOwner);
+
+  if (user != commentIdOwner) {
+    throw new ApiError(401, "Unauthorized User Access");
+  }
+
+  comment.content = newComment;
+  const cm = await comment.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, cm, "Comment Updated Succesfully"));
 });
 
 const deleteComment = asyncHandler(async (req, res) => {
