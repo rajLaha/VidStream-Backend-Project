@@ -77,7 +77,31 @@ const updateComment = asyncHandler(async (req, res) => {
 });
 
 const deleteComment = asyncHandler(async (req, res) => {
-  // TODO: delete a comment
+  const { commentId } = req.params;
+
+  if (!commentId) {
+    throw new ApiError(404, "Unauthorized user access");
+  }
+
+  const comment = await Comment.findById(commentId);
+  if (!comment) {
+    throw new ApiError(404, "Comment not found");
+  }
+
+  const currentUser = req.user?._id.toString();
+  const commentOwner = comment.owner.toString();
+
+  if (currentUser != commentOwner) {
+    throw new ApiError(401, "Unauthorized user access");
+  }
+
+  await Comment.deleteOne({
+    _id: commentId,
+  });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Video Delete Succesfully"));
 });
 
 export { getVideoComments, addComment, updateComment, deleteComment };
