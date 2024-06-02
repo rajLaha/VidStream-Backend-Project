@@ -3,6 +3,7 @@ import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { Likes } from "../models/likes.models.js";
 import { Video } from "../models/video.models.js";
+import { Comment } from "../models/comment.models.js";
 
 const toggleVideoLike = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
@@ -46,9 +47,44 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, likeToggle, "Video Like toggle succesfully"));
 });
 
-const toggleCommentLike = asyncHandler(async (req) => {
+const toggleCommentLike = asyncHandler(async (req, res) => {
   const { commentId } = req.params;
-  //TODO: toggle like on comment
+
+  if (!commentId) {
+    throw new ApiError(401, "Unauthorized user access");
+  }
+
+  const comment = await Comment.findById(commentId);
+
+  if (!comment) {
+    throw new ApiError(404, "Comment not found");
+  }
+
+  let likeToggle;
+
+  const alreadyLiked = await Likes.find({
+    comment: commentId,
+    likedBy: req.user?._id,
+  });
+
+  const toStringConv = alreadyLiked.toString();
+
+  if (toStringConv) {
+    likeToggle = false;
+    await Likes.deleteOne({
+      _id: alreadyLiked[0]._id,
+    });
+  } else {
+    await Likes.create({
+      comment: commentId,
+      likedBy: req.user?._id,
+    });
+    likeToggle = true;
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, likeToggle, "Comment Like toggle succesfully"));
 });
 
 const toggleTweetLike = asyncHandler(async (req) => {
