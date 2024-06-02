@@ -89,6 +89,13 @@ const getVideoById = asyncHandler(async (req, res) => {
 const updateVideo = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
   const video = await Video.findById(videoId);
+  const videoOwner = video.owner.toString();
+  const currentUserCheck = req.user?._id.toString();
+
+  if (videoOwner != currentUserCheck) {
+    throw new ApiError(401, "Unauthorized User Access");
+  }
+
   // console.log(video);
   const { title, description } = req.body;
 
