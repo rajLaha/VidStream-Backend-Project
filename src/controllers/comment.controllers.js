@@ -48,9 +48,11 @@ const addComment = asyncHandler(async (req, res) => {
 
 const updateComment = asyncHandler(async (req, res) => {
   const { commentId } = req.params;
+
   const comment = await Comment.findById(commentId);
+
   if (!commentId) {
-    throw new ApiError(401, "Unauthorized User Access");
+    throw new ApiError(404, "Comment not found");
   }
 
   const { newComment } = req.body;
@@ -61,8 +63,6 @@ const updateComment = asyncHandler(async (req, res) => {
 
   const user = req.user?._id.toString();
   const commentIdOwner = comment.owner.toString();
-
-  console.log(user, commentIdOwner);
 
   if (user != commentIdOwner) {
     throw new ApiError(401, "Unauthorized User Access");
