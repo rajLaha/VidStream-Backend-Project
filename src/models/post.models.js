@@ -3,17 +3,16 @@ import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const postSchema = new Schema(
   {
-    content: {
+    description: {
       type: String,
       required: true,
+    },
+    image: {
+      type: String,
     },
     owner: {
       type: Schema.Types.ObjectId,
       ref: "User",
-    },
-    Video: {
-      type: Schema.Types.ObjectId,
-      ref: "Video",
     },
   },
   { timestamps: true }
