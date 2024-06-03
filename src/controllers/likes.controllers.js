@@ -4,6 +4,7 @@ import { ApiResponse } from "../utils/apiResponse.js";
 import { Likes } from "../models/likes.models.js";
 import { Video } from "../models/video.models.js";
 import { Comment } from "../models/comment.models.js";
+import { Post } from "../models/post.models.js";
 
 const toggleVideoLike = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
@@ -87,13 +88,48 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, likeToggle, "Comment Like toggle succesfully"));
 });
 
-const toggleTweetLike = asyncHandler(async (req) => {
-  const { tweetId } = req.params;
-  //TODO: toggle like on tweet
+const togglePostLike = asyncHandler(async (req, res) => {
+  const { postId } = req.params;
+
+  if (!postId) {
+    throw new ApiError(401, "Unauthorized user access");
+  }
+
+  const post = await Post.findById(postId);
+
+  if (!post) {
+    throw new ApiError(404, "Post not found");
+  }
+
+  let likeToggle;
+
+  const alreadyLiked = await Likes.find({
+    post: postId,
+    likedBy: req.user?._id,
+  });
+
+  const toStringConv = alreadyLiked.toString();
+
+  if (toStringConv) {
+    likeToggle = false;
+    await Likes.deleteOne({
+      _id: alreadyLiked[0]._id,
+    });
+  } else {
+    await Likes.create({
+      post: postId,
+      likedBy: req.user?._id,
+    });
+    likeToggle = true;
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, likeToggle, "Post Like toggle succesfully"));
 });
 
 const getLikedVideos = asyncHandler(async () => {
   //TODO: get all liked videos
 });
 
-export { toggleCommentLike, toggleTweetLike, toggleVideoLike, getLikedVideos };
+export { toggleCommentLike, togglePostLike, toggleVideoLike, getLikedVideos };
