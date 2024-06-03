@@ -3,7 +3,7 @@ import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const postSchema = new Schema(
   {
-    description: {
+    content: {
       type: String,
       required: true,
     },
