@@ -3,7 +3,7 @@ import { Post } from "../models/post.models.js";
 import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { deleteOnCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
 
 const createPost = asyncHandler(async (req, res) => {
   const content = req.body;
@@ -92,6 +92,10 @@ const deletePost = asyncHandler(async (req, res) => {
 
   if (post.owner.toString() !== req.user?._id.toString()) {
     throw new ApiError(401, "Unauthorized user access");
+  }
+
+  if (post.image) {
+    await deleteOnCloudinary(post.image);
   }
 
   await Post.deleteOne({
