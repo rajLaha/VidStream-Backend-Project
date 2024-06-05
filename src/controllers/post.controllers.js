@@ -79,7 +79,6 @@ const updatePost = asyncHandler(async (req, res) => {
 
 const deletePost = asyncHandler(async (req, res) => {
   const { postId } = req.params;
-  console.log(postId);
   if (!postId) {
     throw new ApiError(401, "Unauthorized user access");
   }
