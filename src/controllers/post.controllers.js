@@ -35,11 +35,57 @@ const getUserPosts = asyncHandler(async (req, res) => {
 });
 
 const updatePost = asyncHandler(async (req, res) => {
-  //TODO: update tweet
+  const { postId } = req.params;
+
+  if (!postId) {
+    throw new ApiError(401, "Unauthorized User Access");
+  }
+
+  const post = await Post.findById(postId);
+
+  if (!post) {
+    throw new ApiError(404, "Post not found");
+  }
+
+  if (post.owner.toString() !== req.user?._id.toString()) {
+    throw new ApiError(401, "Unauthorized user access");
+  }
+
+  const { content } = req.body;
+
+  post.content = content;
+  const updatedPost = await post.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updatedPost, "Post updatation Succesfully"));
 });
 
 const deletePost = asyncHandler(async (req, res) => {
   //TODO: delete tweet
+  const { postId } = req.params;
+  console.log(postId);
+  if (!postId) {
+    throw new ApiError(401, "Unauthorized user access");
+  }
+
+  const post = await Post.findById(postId);
+
+  if (!post) {
+    throw new ApiError(404, "Post not found");
+  }
+
+  if (post.owner.toString() !== req.user?._id.toString()) {
+    throw new ApiError(401, "Unauthorized user access");
+  }
+
+  await Post.deleteOne({
+    _id: postId,
+  });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Post Delete Succesfully"));
 });
 
 export { createPost, getUserPosts, updatePost, deletePost };
