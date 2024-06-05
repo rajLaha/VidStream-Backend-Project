@@ -31,7 +31,23 @@ const createPost = asyncHandler(async (req, res) => {
 });
 
 const getUserPosts = asyncHandler(async (req, res) => {
-  // TODO: get user tweets
+  const user = req.user?._id;
+
+  if (!user) {
+    throw new ApiError(401, "Unauthorized user access");
+  }
+
+  const post = await Post.find({
+    owner: user,
+  });
+
+  if (!post) {
+    throw new ApiError(404, "Post not found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, post, "Post of user fetched succesfully"));
 });
 
 const updatePost = asyncHandler(async (req, res) => {
@@ -62,7 +78,6 @@ const updatePost = asyncHandler(async (req, res) => {
 });
 
 const deletePost = asyncHandler(async (req, res) => {
-  //TODO: delete tweet
   const { postId } = req.params;
   console.log(postId);
   if (!postId) {
