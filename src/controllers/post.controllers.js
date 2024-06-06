@@ -4,6 +4,7 @@ import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { deleteOnCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
+import { Likes } from "../models/likes.models.js";
 
 const createPost = asyncHandler(async (req, res) => {
   const content = req.body;
@@ -99,6 +100,10 @@ const deletePost = asyncHandler(async (req, res) => {
 
   await Post.deleteOne({
     _id: postId,
+  });
+
+  await Likes.deleteMany({
+    post: postId,
   });
 
   return res
