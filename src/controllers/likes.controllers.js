@@ -128,8 +128,54 @@ const togglePostLike = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, likeToggle, "Post Like toggle succesfully"));
 });
 
+const togglePostCommentLike = asyncHandler(async (req, res) => {
+  const { postCommentId } = req.params;
+
+  if (!postCommentId) {
+    throw new ApiError(401, "Unauthorized user access");
+  }
+
+  const comment = await Comment.findById(postCommentId);
+
+  if (!comment) {
+    throw new ApiError(404, "Comment not found");
+  }
+
+  let likeToggle;
+
+  const alreadyLiked = await Likes.find({
+    postComment: postCommentId,
+    likedBy: req.user?._id,
+  });
+
+  const toStringConv = alreadyLiked.toString();
+
+  if (toStringConv) {
+    likeToggle = false;
+    await Likes.deleteOne({
+      _id: alreadyLiked[0]._id,
+    });
+  } else {
+    await Likes.create({
+      postComment: postCommentId,
+      likedBy: req.user?._id,
+    });
+    likeToggle = true;
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, likeToggle, "Post Comment Like toggle succesfully"));
+});
+
 const getLikedVideos = asyncHandler(async () => {
   //TODO: get all liked videos
 });
 
-export { toggleCommentLike, togglePostLike, toggleVideoLike, getLikedVideos };
+export {
+  toggleCommentLike,
+  togglePostLike,
+  toggleVideoLike,
+  togglePostCommentLike,
+  getLikedVideos,
+};
