@@ -32,7 +32,7 @@ app.use("/api/v1/videos", videoRouter);
 app.use("/api/v1/comments", commentRouter);
 app.use("/api/v1/likes", likesRouter);
 app.use("/api/v1/posts", postRouter);
-app.use("api/v1/playlists", playlistRouter);
+app.use("/api/v1/playlists", playlistRouter);
 // http://localhost:8000/api/v1/usesrs/register
 
 export { app };

@@ -1,19 +1,21 @@
 import mongoose, { isValidObjectId } from "mongoose";
-import { Playlist } from "../models/playlist.model.js";
+import { Playlist } from "../models/playlist.models.js";
 import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { Video } from "../models/video.models.js";
 
 const createPlaylist = asyncHandler(async (req, res) => {
   const { name, description } = req.body;
 
-  if (!(name && description)) {
-    throw new ApiError(400, "Name and Description is mandatory");
+  if (!name) {
+    throw new ApiError(400, "Name is mandatory");
   }
 
   const playlist = await Playlist.create({
     name,
     description,
+    owner: req.user?._id,
   });
 
   if (!playlist) {
@@ -37,6 +39,52 @@ const getPlaylistById = asyncHandler(async (req, res) => {
 
 const addVideoToPlaylist = asyncHandler(async (req, res) => {
   const { playlistId, videoId } = req.params;
+  if (!playlistId) {
+    throw new ApiError(400, "Unauthorised user access");
+  }
+
+  if (!videoId) {
+    throw new ApiError(400, "Unauthorised user access");
+  }
+
+  const playlist = await Playlist.findById(playlistId);
+  const video = await Video.findById(videoId);
+  if (!playlist) {
+    throw new ApiError(404, "Playlist not found");
+  }
+  if (!video) {
+    throw new ApiError(404, "Video not found");
+  }
+
+  if (req.user?.id.toString() !== playlist.owner.toString()) {
+    throw new ApiError(400, "Unauthorised user access");
+  }
+
+  const playlistWithVideo = await Playlist.findByIdAndUpdate(
+    playlistId,
+    {
+      $set: {
+        video: video,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+  console.log(playlistWithVideo);
+  if (!playlistWithVideo) {
+    throw new ApiError(500, "Something went wrong while add video in playlist");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        playlistWithVideo,
+        "Video added in playlist succesfully"
+      )
+    );
 });
 
 const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
