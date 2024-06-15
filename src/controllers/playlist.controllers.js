@@ -48,32 +48,48 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
   }
 
   const playlist = await Playlist.findById(playlistId);
-  const video = await Video.findById(videoId);
+
   if (!playlist) {
     throw new ApiError(404, "Playlist not found");
   }
-  if (!video) {
-    throw new ApiError(404, "Video not found");
-  }
 
-  if (req.user?.id.toString() !== playlist.owner.toString()) {
-    throw new ApiError(400, "Unauthorised user access");
-  }
+  const videos = videoId.split(",");
 
-  const playlistWithVideo = await Playlist.findByIdAndUpdate(
-    playlistId,
-    {
-      $set: {
-        video: video,
-      },
+  videos.forEach((element) => {
+    playlist.video.forEach((vid) => {
+      if (element == vid) {
+        throw new ApiError(
+          400,
+          "One or more videos is already added in playlist"
+        );
+      }
+    });
+  });
+
+  const video = await Video.find({
+    _id: {
+      $in: videos,
     },
-    {
-      new: true,
-    }
-  );
-  console.log(playlistWithVideo);
+  });
+
+  if (video.length != videos.length) {
+    throw new ApiError(400, "One or more videos do not exist");
+  }
+
+  // Ensure the playlist's videos field is an array before updating
+  if (!Array.isArray(playlist.video)) {
+    playlist.video = [];
+  }
+
+  // Update the playlist to add the video IDs
+  playlist.video.push(...videos);
+  const playlistWithVideo = await playlist.save();
+
   if (!playlistWithVideo) {
-    throw new ApiError(500, "Something went wrong while add video in playlist");
+    throw new ApiError(
+      500,
+      "Something went wrong while adding Videos in playlist"
+    );
   }
 
   return res
@@ -81,7 +97,7 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
     .json(
       new ApiResponse(
         200,
-        playlistWithVideo,
+        { playlistWithVideo },
         "Video added in playlist succesfully"
       )
     );
