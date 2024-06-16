@@ -9,22 +9,26 @@ const createPlaylist = asyncHandler(async (req, res) => {
   const { name, description } = req.body;
 
   if (!name) {
-    throw new ApiError(400, "Name is mandatory");
+    throw new ApiError(400, "Name is Mandatory");
   }
 
-  const playlist = await Playlist.create({
-    name,
-    description,
-    owner: req.user?._id,
-  });
+  try {
+    const playlist = await Playlist.create({
+      name,
+      description,
+      owner: req.user?._id,
+    });
 
-  if (!playlist) {
-    throw new ApiError(500, "Something went wrong while create playlists");
+    if (!playlist) {
+      throw new ApiError(500, "Something went wrong while Creating Playlists");
+    }
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, playlist, "Playlist create succesfully"));
+  } catch (error) {
+    catchError(error, res, "Creating Playlist");
   }
-
-  return res
-    .status(200)
-    .json(new ApiResponse(200, playlist, "Playlist create Succesfully"));
 });
 
 const getUserPlaylists = asyncHandler(async (req, res) => {
@@ -98,7 +102,7 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
         new ApiResponse(
           200,
           { playlistWithVideo },
-          "Video added in playlist succesfully"
+          "Video added in Playlist succesfully"
         )
       );
   } catch (error) {
@@ -140,7 +144,7 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
     if (!playlist) {
       throw new ApiError(
         404,
-        "The Video does not exist in the playlist or the Playlist does not exist"
+        "The Video do not exist in the playlist or the Playlist does not exist"
       );
     }
 
