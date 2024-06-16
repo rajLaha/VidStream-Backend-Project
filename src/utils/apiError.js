@@ -20,4 +20,10 @@ class ApiError extends Error {
   }
 }
 
-export { ApiError };
+const catchError = (error, res) => {
+  return res
+    .status(error.statusCode)
+    .json(`Something went wrong 'Error': ${error.message}`);
+};
+
+export { ApiError, catchError };
