@@ -122,8 +122,6 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
       },
     });
 
-    console.log(video);
-
     if (video.length != videos.length) {
       throw new ApiError(400, "One or more videos do not exist");
     }
@@ -134,8 +132,6 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
         $all: videos,
       },
     });
-
-    console.log(playlist);
 
     if (!playlist) {
       throw new ApiError(
@@ -172,7 +168,6 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
         )
       );
   } catch (error) {
-    console.log(error.stack);
     catchError(error, res);
   }
 });
