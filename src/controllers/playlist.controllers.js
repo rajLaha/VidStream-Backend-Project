@@ -39,78 +39,82 @@ const getPlaylistById = asyncHandler(async (req, res) => {
 const addVideoToPlaylist = asyncHandler(async (req, res) => {
   const { playlistId, videoId } = req.params;
   if (!playlistId) {
-    throw new ApiError(400, "Unauthorised user access");
+    throw new ApiError(400, "Required URL parameter is missing playlistId");
   }
 
   if (!videoId) {
-    throw new ApiError(400, "Unauthorised user access");
+    throw new ApiError(400, "Required URL parameter is missing videoId");
   }
 
-  const playlist = await Playlist.findById(playlistId);
+  try {
+    const playlist = await Playlist.findById(playlistId);
 
-  if (!playlist) {
-    throw new ApiError(404, "Playlist not found");
-  }
+    if (!playlist) {
+      throw new ApiError(404, "Playlist not found");
+    }
 
-  const videos = videoId.split(",");
+    const videos = videoId.split(",");
 
-  videos.forEach((element) => {
-    playlist.video.forEach((vid) => {
-      if (element == vid) {
-        throw new ApiError(
-          400,
-          "One or more videos is already added in playlist"
-        );
-      }
+    videos.forEach((element) => {
+      playlist.video.forEach((vid) => {
+        if (element == vid) {
+          throw new ApiError(
+            400,
+            "One or more videos is already added in playlist"
+          );
+        }
+      });
     });
-  });
 
-  const video = await Video.find({
-    _id: {
-      $in: videos,
-    },
-  });
+    const video = await Video.find({
+      _id: {
+        $in: videos,
+      },
+    });
 
-  if (video.length != videos.length) {
-    throw new ApiError(400, "One or more videos do not exist");
+    if (video.length != videos.length) {
+      throw new ApiError(400, "One or more videos do not exist");
+    }
+
+    // Ensure the playlist's videos field is an array before updating
+    if (!Array.isArray(playlist.video)) {
+      playlist.video = [];
+    }
+
+    // Update the playlist to add the video IDs
+    playlist.video.push(...videos);
+    const playlistWithVideo = await playlist.save();
+
+    if (!playlistWithVideo) {
+      throw new ApiError(
+        500,
+        "Something went wrong while adding Videos in playlist"
+      );
+    }
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          { playlistWithVideo },
+          "Video added in playlist succesfully"
+        )
+      );
+  } catch (error) {
+    catchError(error, res, "Adding Video in Playlist");
   }
-
-  // Ensure the playlist's videos field is an array before updating
-  if (!Array.isArray(playlist.video)) {
-    playlist.video = [];
-  }
-
-  // Update the playlist to add the video IDs
-  playlist.video.push(...videos);
-  const playlistWithVideo = await playlist.save();
-
-  if (!playlistWithVideo) {
-    throw new ApiError(
-      500,
-      "Something went wrong while adding Videos in playlist"
-    );
-  }
-
-  return res
-    .status(200)
-    .json(
-      new ApiResponse(
-        200,
-        { playlistWithVideo },
-        "Video added in playlist succesfully"
-      )
-    );
 });
 
 const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
   const { playlistId, videoId } = req.params;
 
   if (!playlistId) {
-    throw new ApiError(401, "Unauthorized user access");
+    throw new ApiError(400, "Required URL parameter is missing playlistId");
   }
 
   if (!videoId) {
-    throw new ApiError(401, "Unauthorized user access");
+    throw new ApiError(400, "Required URL parameter is missing videoId");
   }
 
   try {
@@ -168,13 +172,16 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
         )
       );
   } catch (error) {
-    catchError(error, res);
+    catchError(error, res, "Remove Video from Playlist");
   }
 });
 
 const deletePlaylist = asyncHandler(async (req, res) => {
   const { playlistId } = req.params;
-  // TODO: delete playlist
+
+  if (!playlistId) {
+    throw new ApiError(400, "");
+  }
 });
 
 const updatePlaylist = asyncHandler(async (req, res) => {

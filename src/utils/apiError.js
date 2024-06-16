@@ -20,11 +20,11 @@ class ApiError extends Error {
   }
 }
 
-const catchError = (error, res) => {
+const catchError = (error, res, manualMsg) => {
   console.log(error.stack);
   return res
     .status(error.statusCode || 500)
-    .json(`Something went wrong Error: ${error.message}`);
+    .json(`(Something went wrong While ${manualMsg}) Error: ${error.message}`);
 };
 
 export { ApiError, catchError };
