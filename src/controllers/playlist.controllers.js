@@ -8,11 +8,11 @@ import { Video } from "../models/video.models.js";
 const createPlaylist = asyncHandler(async (req, res) => {
   const { name, description } = req.body;
 
-  if (!name) {
-    throw new ApiError(400, "Name is Mandatory");
-  }
-
   try {
+    if (!name) {
+      throw new ApiError(400, "Name is Mandatory");
+    }
+
     const playlist = await Playlist.create({
       name,
       description,
@@ -42,15 +42,16 @@ const getPlaylistById = asyncHandler(async (req, res) => {
 
 const addVideoToPlaylist = asyncHandler(async (req, res) => {
   const { playlistId, videoId } = req.params;
-  if (!playlistId) {
-    throw new ApiError(400, "Required URL parameter is missing playlistId");
-  }
-
-  if (!videoId) {
-    throw new ApiError(400, "Required URL parameter is missing videoId");
-  }
 
   try {
+    if (!playlistId) {
+      throw new ApiError(400, "Required URL parameter is missing playlistId");
+    }
+
+    if (!videoId) {
+      throw new ApiError(400, "Required URL parameter is missing videoId");
+    }
+
     const playlist = await Playlist.findById(playlistId);
 
     if (!playlist) {
@@ -116,16 +117,15 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
 
 const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
   const { playlistId, videoId } = req.params;
-
-  if (!playlistId) {
-    throw new ApiError(400, "Required URL parameter is missing playlistId");
-  }
-
-  if (!videoId) {
-    throw new ApiError(400, "Required URL parameter is missing videoId");
-  }
-
   try {
+    if (!playlistId) {
+      throw new ApiError(400, "Required URL parameter is missing playlistId");
+    }
+
+    if (!videoId) {
+      throw new ApiError(400, "Required URL parameter is missing videoId");
+    }
+
     const videos = videoId.split(",");
 
     const video = await Video.find({
@@ -187,11 +187,11 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
 const deletePlaylist = asyncHandler(async (req, res) => {
   const { playlistId } = req.params;
 
-  if (!playlistId) {
-    throw new ApiError(400, "Required URL parameter is missing playlistId");
-  }
-
   try {
+    if (!playlistId) {
+      throw new ApiError(400, "Required URL parameter is missing playlistId");
+    }
+
     const playlist = await Playlist.findById(playlistId);
 
     if (!playlist) {
@@ -219,7 +219,41 @@ const deletePlaylist = asyncHandler(async (req, res) => {
 const updatePlaylist = asyncHandler(async (req, res) => {
   const { playlistId } = req.params;
   const { name, description } = req.body;
-  //TODO: update playlist
+  try {
+    if (!playlistId) {
+      throw new ApiError(400, "Required URL parameter is missing playlistId");
+    }
+
+    if (!name && !description) {
+      throw new ApiError(400, "At least one field is required");
+    }
+
+    const playlist = await Playlist.findById(playlistId);
+
+    if (!playlist) {
+      throw new ApiError(404, "Playlist not found");
+    }
+
+    if (playlist.owner.toString() != req.user?._id.toString()) {
+      throw new ApiError(401, "Unauthorized user access");
+    }
+
+    if (name) {
+      playlist.name = name;
+    }
+
+    if (description) {
+      playlist.description = description;
+    }
+
+    await playlist.save();
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, playlist, "Playlist Update Succesfully"));
+  } catch (error) {
+    catchError(error, res, "Updating Playlist");
+  }
 });
 
 export {
