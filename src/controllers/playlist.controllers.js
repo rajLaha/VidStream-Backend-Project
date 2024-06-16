@@ -1,6 +1,6 @@
 import mongoose, { isValidObjectId } from "mongoose";
 import { Playlist } from "../models/playlist.models.js";
-import { ApiError } from "../utils/apiError.js";
+import { ApiError, catchError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { Video } from "../models/video.models.js";
@@ -34,7 +34,6 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
 
 const getPlaylistById = asyncHandler(async (req, res) => {
   const { playlistId } = req.params;
-  //TODO: get playlist by id
 });
 
 const addVideoToPlaylist = asyncHandler(async (req, res) => {
@@ -105,7 +104,77 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
 
 const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
   const { playlistId, videoId } = req.params;
-  // TODO: remove video from playlist
+
+  if (!playlistId) {
+    throw new ApiError(401, "Unauthorized user access");
+  }
+
+  if (!videoId) {
+    throw new ApiError(401, "Unauthorized user access");
+  }
+
+  try {
+    const videos = videoId.split(",");
+
+    const video = await Video.find({
+      _id: {
+        $in: videos,
+      },
+    });
+
+    console.log(video);
+
+    if (video.length != videos.length) {
+      throw new ApiError(400, "One or more videos do not exist");
+    }
+
+    const playlist = await Playlist.findOne({
+      _id: playlistId,
+      video: {
+        $all: videos,
+      },
+    });
+
+    console.log(playlist);
+
+    if (!playlist) {
+      throw new ApiError(
+        404,
+        "The Video does not exist in the playlist or the Playlist does not exist"
+      );
+    }
+
+    if (playlist.owner.toString() != req.user?._id.toString()) {
+      throw new ApiError(400, "Unauthorized user Access");
+    }
+
+    const playlistAfterRemoveVideo = await Playlist.findByIdAndUpdate(
+      playlistId,
+      {
+        $pull: {
+          video: {
+            $in: videos,
+          },
+        },
+      },
+      {
+        new: true,
+      }
+    );
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          playlistAfterRemoveVideo,
+          "Video Removed from Playlist Succesfully"
+        )
+      );
+  } catch (error) {
+    console.log(error.stack);
+    catchError(error, res);
+  }
 });
 
 const deletePlaylist = asyncHandler(async (req, res) => {
