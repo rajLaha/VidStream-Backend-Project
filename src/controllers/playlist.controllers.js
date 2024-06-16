@@ -57,6 +57,10 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
       throw new ApiError(404, "Playlist not found");
     }
 
+    if (playlist.owner.toString() != req.user?._id) {
+      throw new ApiError(401, "Unauthorized user access");
+    }
+
     const videos = videoId.split(",");
 
     videos.forEach((element) => {
@@ -184,7 +188,31 @@ const deletePlaylist = asyncHandler(async (req, res) => {
   const { playlistId } = req.params;
 
   if (!playlistId) {
-    throw new ApiError(400, "");
+    throw new ApiError(400, "Required URL parameter is missing playlistId");
+  }
+
+  try {
+    const playlist = await Playlist.findById(playlistId);
+
+    if (!playlist) {
+      throw new ApiError(404, "Playlist not found");
+    }
+
+    if (playlist.owner.toString() != req.user?._id.toString()) {
+      throw new ApiError(401, "Unauthorized user access");
+    }
+
+    const playlistDelete = await Playlist.findByIdAndDelete(playlist);
+
+    if (!playlistDelete) {
+      throw new ApiError(404, "Playlist not found while Playlist Delete");
+    }
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, {}, "Playlist Delete Succesfully"));
+  } catch (error) {
+    catchError(error, res, "Delete Playlist");
   }
 });
 
