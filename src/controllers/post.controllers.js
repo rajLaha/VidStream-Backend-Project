@@ -1,114 +1,165 @@
 import mongoose from "mongoose";
 import { Post } from "../models/post.models.js";
-import { ApiError } from "../utils/apiError.js";
+import { ApiError, catchError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { deleteOnCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
 import { Likes } from "../models/likes.models.js";
+import { User } from "../models/user.models.js";
 
 const createPost = asyncHandler(async (req, res) => {
   const content = req.body;
 
-  if (!content) {
-    throw new ApiError(400, "Content is Mandatory");
+  try {
+    if (!content) {
+      throw new ApiError(400, "Content is Mandatory");
+    }
+
+    const imageFilePath = req.file?.path;
+    let image;
+
+    if (imageFilePath) {
+      image = await uploadOnCloudinary(imageFilePath);
+    }
+
+    const post = await Post.create({
+      content: content.content,
+      image: image?.url || "",
+      owner: req.user?._id,
+    });
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, post, "Post uploaded Succesfully"));
+  } catch (error) {
+    catchError(error, res, "Create Post");
   }
-
-  const imageFilePath = req.file?.path;
-  let image;
-
-  if (imageFilePath) {
-    image = await uploadOnCloudinary(imageFilePath);
-  }
-
-  const post = await Post.create({
-    content: content.content,
-    image: image?.url || "",
-    owner: req.user?._id,
-  });
-
-  return res
-    .status(200)
-    .json(new ApiResponse(200, post, "Post uploaded Succesfully"));
 });
 
 const getUserPosts = asyncHandler(async (req, res) => {
-  const user = req.user?._id;
+  const { userId } = req.params;
 
-  if (!user) {
-    throw new ApiError(401, "Unauthorized user access");
+  try {
+    if (!userId) {
+      throw new ApiError(400, "Required URL parameter is missing userId");
+    }
+
+    const ifUserExists = await User.exists(new mongoose.Types.ObjectId(userId));
+
+    if (!ifUserExists) {
+      throw new ApiError(404, "User not found");
+    }
+
+    const posts = await Post.aggregate([
+      {
+        $match: {
+          owner: new mongoose.Types.ObjectId(userId),
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "owner",
+          foreignField: "_id",
+          as: "ownerDetails",
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          content: 1,
+          image: 1,
+          ownerDetails: {
+            _id: 1,
+            userName: 1,
+            fullName: 1,
+            avatar: 1,
+            coverImage: 1,
+          },
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      },
+    ]);
+
+    if (posts.length == 0) {
+      throw new ApiError(404, "Post not found");
+    }
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, posts, "Post of user fetched succesfully"));
+  } catch (error) {
+    catchError(error, res, "Fetching User Post");
   }
-
-  const post = await Post.find({
-    owner: user,
-  });
-
-  if (!post) {
-    throw new ApiError(404, "Post not found");
-  }
-
-  return res
-    .status(200)
-    .json(new ApiResponse(200, post, "Post of user fetched succesfully"));
 });
 
 const updatePost = asyncHandler(async (req, res) => {
   const { postId } = req.params;
 
-  if (!postId) {
-    throw new ApiError(401, "Unauthorized User Access");
+  try {
+    if (!postId) {
+      throw new ApiError(404, "Required URL parameter is missing postId");
+    }
+
+    const post = await Post.findById(postId);
+
+    if (!post) {
+      throw new ApiError(404, "Post not found");
+    }
+
+    if (post.owner.toString() !== req.user?._id.toString()) {
+      throw new ApiError(401, "Unauthorized user access");
+    }
+
+    const { content } = req.body;
+
+    post.content = content;
+    const updatedPost = await post.save();
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, updatedPost, "Post updatation Succesfully"));
+  } catch (error) {
+    catchError(error, res, "Update Post");
   }
-
-  const post = await Post.findById(postId);
-
-  if (!post) {
-    throw new ApiError(404, "Post not found");
-  }
-
-  if (post.owner.toString() !== req.user?._id.toString()) {
-    throw new ApiError(401, "Unauthorized user access");
-  }
-
-  const { content } = req.body;
-
-  post.content = content;
-  const updatedPost = await post.save();
-
-  return res
-    .status(200)
-    .json(new ApiResponse(200, updatedPost, "Post updatation Succesfully"));
 });
 
 const deletePost = asyncHandler(async (req, res) => {
   const { postId } = req.params;
-  if (!postId) {
-    throw new ApiError(401, "Unauthorized user access");
+  try {
+    if (!postId) {
+      throw new ApiError(404, "Required URL parameter is missing postId");
+    }
+
+    const post = await Post.findById(postId);
+
+    if (!post) {
+      throw new ApiError(404, "Post not found");
+    }
+
+    if (post.owner.toString() !== req.user?._id.toString()) {
+      throw new ApiError(401, "Unauthorized user access");
+    }
+
+    if (post.image) {
+      await deleteOnCloudinary(post.image);
+    }
+
+    await Post.deleteOne({
+      _id: postId,
+    });
+
+    await Likes.deleteMany({
+      post: postId,
+    });
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, {}, "Post Delete Succesfully"));
+  } catch (error) {
+    catchError(error, res, "Deleting Post");
   }
-
-  const post = await Post.findById(postId);
-
-  if (!post) {
-    throw new ApiError(404, "Post not found");
-  }
-
-  if (post.owner.toString() !== req.user?._id.toString()) {
-    throw new ApiError(401, "Unauthorized user access");
-  }
-
-  if (post.image) {
-    await deleteOnCloudinary(post.image);
-  }
-
-  await Post.deleteOne({
-    _id: postId,
-  });
-
-  await Likes.deleteMany({
-    post: postId,
-  });
-
-  return res
-    .status(200)
-    .json(new ApiResponse(200, {}, "Post Delete Succesfully"));
 });
 
 export { createPost, getUserPosts, updatePost, deletePost };
