@@ -38,6 +38,59 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
 
 const getPlaylistById = asyncHandler(async (req, res) => {
   const { playlistId } = req.params;
+  try {
+    if (!playlistId) {
+      throw new ApiError(400, "Required URL parameter is missing playlistId");
+    }
+
+    const playlist = await Playlist.aggregate([
+      {
+        $match: {
+          _id: new mongoose.Types.ObjectId(playlistId),
+        },
+      },
+      {
+        $lookup: {
+          from: "videos",
+          localField: "video",
+          foreignField: "_id",
+          as: "videoDetails",
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          description: 1,
+          videoDetails: {
+            _id: 1,
+            videoFile: 1,
+            thumbnail: 1,
+            title: 1,
+            description: 1,
+            duration: 1,
+            views: 1,
+            owner: 1,
+            createdAt: 1,
+            updatedAt: 1,
+          },
+          owner: 1,
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      },
+    ]);
+
+    if (playlist.length == 0) {
+      throw new ApiError(404, "Playlist not found");
+    }
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, playlist, "Playlist fetched succesfully"));
+  } catch (error) {
+    catchError(error, res, "Fetching Video");
+  }
 });
 
 const addVideoToPlaylist = asyncHandler(async (req, res) => {
