@@ -33,7 +33,28 @@ const createPlaylist = asyncHandler(async (req, res) => {
 
 const getUserPlaylists = asyncHandler(async (req, res) => {
   const { userId } = req.params;
-  //TODO: get user playlists
+
+  try {
+    if (!userId) {
+      throw new ApiError(400, "Required URL parameter is missing userId");
+    }
+
+    const userPlaylist = await Playlist.find({
+      owner: new mongoose.Types.ObjectId(userId),
+    });
+
+    if (userPlaylist.length == 0) {
+      throw new ApiError(404, "User Playlist not found");
+    }
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, userPlaylist, "User Playlist fetched Succesfully")
+      );
+  } catch (error) {
+    catchError(error, res, "Fetching user playlist");
+  }
 });
 
 const getPlaylistById = asyncHandler(async (req, res) => {
