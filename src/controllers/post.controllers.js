@@ -6,6 +6,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { deleteOnCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
 import { Likes } from "../models/likes.models.js";
 import { User } from "../models/user.models.js";
+import { Comment } from "../models/comment.models.js";
 
 const createPost = asyncHandler(async (req, res) => {
   const content = req.body;
@@ -99,7 +100,7 @@ const updatePost = asyncHandler(async (req, res) => {
 
   try {
     if (!postId) {
-      throw new ApiError(404, "Required URL parameter is missing postId");
+      throw new ApiError(400, "Required URL parameter is missing postId");
     }
 
     const post = await Post.findById(postId);
@@ -129,7 +130,7 @@ const deletePost = asyncHandler(async (req, res) => {
   const { postId } = req.params;
   try {
     if (!postId) {
-      throw new ApiError(404, "Required URL parameter is missing postId");
+      throw new ApiError(400, "Required URL parameter is missing postId");
     }
 
     const post = await Post.findById(postId);
@@ -151,6 +152,10 @@ const deletePost = asyncHandler(async (req, res) => {
     });
 
     await Likes.deleteMany({
+      post: postId,
+    });
+
+    await Comment.deleteMany({
       post: postId,
     });
 
