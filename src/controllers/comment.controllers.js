@@ -1,5 +1,4 @@
-import mongoose, { isValidObjectId } from "mongoose";
-import { User } from "../models/user.models.js";
+import mongoose from "mongoose";
 import { Comment } from "../models/comment.models.js";
 import { Video } from "../models/video.models.js";
 import { ApiError, catchError } from "../utils/apiError.js";
