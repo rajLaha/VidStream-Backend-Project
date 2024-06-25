@@ -8,14 +8,90 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { Post } from "../models/post.models.js";
 
 const getVideoComments = asyncHandler(async (req, res) => {
-  //TODO: get all comments for a video
   const { videoId } = req.params;
-
-  if (!videoId) {
-    throw new ApiError(401, "Unauthorized Access");
-  }
-
   const { page = 1, limit = 10 } = req.query;
+
+  try {
+    if (!videoId) {
+      throw new ApiError(400, "Required URL parameter is missing videoId");
+    }
+
+    const isVideoExists = await Video.exists(
+      new mongoose.Types.ObjectId(videoId)
+    );
+
+    if (!isVideoExists) {
+      throw new ApiError(404, "Video not found");
+    }
+
+    const commentsFetchQuery = Comment.aggregate([
+      {
+        $match: {
+          video: new mongoose.Types.ObjectId(videoId),
+        },
+      },
+      {
+        $lookup: {
+          from: "videos",
+          localField: "video",
+          foreignField: "_id",
+          as: "video",
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "owner",
+          foreignField: "_id",
+          as: "ownerDetails",
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          content: 1,
+          video: {
+            _id: 1,
+            videoFile: 1,
+            thumbnail: 1,
+            title: 1,
+            description: 1,
+            duration: 1,
+            views: 1,
+          },
+          ownerDetails: {
+            _id: 1,
+            userName: 1,
+            email: 1,
+            fullName: 1,
+            avatar: 1,
+            coverImage: 1,
+          },
+        },
+      },
+    ]);
+
+    const options = {
+      page: parseInt(page, 10),
+      limit: parseInt(limit, 10),
+    };
+
+    // aggregatePaginate returns object type of result
+    const comments = await Comment.aggregatePaginate(
+      commentsFetchQuery,
+      options
+    );
+
+    if (!comments) {
+      throw new ApiError(404, "Comments not found");
+    }
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, comments, "Comments fetched succesfully"));
+  } catch (error) {
+    catchError(error, res, "Fetching Comments");
+  }
 });
 
 const addComment = asyncHandler(async (req, res) => {
@@ -115,14 +191,64 @@ const deleteComment = asyncHandler(async (req, res) => {
 });
 
 const getPostComments = asyncHandler(async (req, res) => {
-  //TODO: get all comments for a video
-  const { videoId } = req.params;
-
-  if (!videoId) {
-    throw new ApiError(401, "Unauthorized Access");
-  }
-
+  const { postId } = req.params;
   const { page = 1, limit = 10 } = req.query;
+
+  try {
+    if (!postId) {
+      throw new ApiError(401, "Unauthorized Access");
+    }
+
+    const isPostExists = await Post.exists(new mongoose.Types.ObjectId(postId));
+
+    if (!isPostExists) {
+      throw new ApiError(404, "Post not found");
+    }
+
+    const commentsFetchQuery = Comment.aggregate([
+      {
+        $match: {
+          post: new mongoose.Types.ObjectId(postId),
+        },
+      },
+      {
+        $lookup: {
+          from: "posts",
+          localField: "post",
+          foreignField: "_id",
+          as: "post",
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "owner",
+          foreignField: "_id",
+          as: "owner",
+        },
+      },
+    ]);
+
+    const options = {
+      page: parseInt(page, 10),
+      limit: parseInt(limit, 10),
+    };
+
+    const comments = await Comment.aggregatePaginate(
+      commentsFetchQuery,
+      options
+    );
+
+    if (!comments) {
+      throw new ApiError(404, "Comments not found");
+    }
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, comments, "Comments fetched succesfully"));
+  } catch (error) {
+    catchError(error, res, "Fetching Comments");
+  }
 });
 
 const addPostComment = asyncHandler(async (req, res) => {
