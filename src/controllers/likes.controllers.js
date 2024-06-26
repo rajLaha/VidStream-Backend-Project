@@ -14,7 +14,6 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
     if (!videoId) {
       throw new ApiError(400, "Required URL parameter is missing videoId");
     }
-    //TODO: toggle like on video
     const checkVideoAvailable = await Video.exists(
       new mongoose.Types.ObjectId(videoId)
     );
