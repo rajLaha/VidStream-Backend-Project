@@ -75,13 +75,12 @@ const getVideoComments = asyncHandler(async (req, res) => {
       limit: parseInt(limit, 10),
     };
 
-    // aggregatePaginate returns object type of result
     const comments = await Comment.aggregatePaginate(
       commentsFetchQuery,
       options
     );
 
-    if (!comments) {
+    if (comments.length == 0) {
       throw new ApiError(404, "Comments not found");
     }
 
@@ -238,7 +237,7 @@ const getPostComments = asyncHandler(async (req, res) => {
       options
     );
 
-    if (!comments) {
+    if (comments.length == 0) {
       throw new ApiError(404, "Comments not found");
     }
 
