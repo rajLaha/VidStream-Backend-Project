@@ -25,6 +25,8 @@ import commentRouter from "./routes/comment.routes.js";
 import likesRouter from "./routes/likes.routes.js";
 import postRouter from "./routes/post.routes.js";
 import playlistRouter from "./routes/playlist.routes.js";
+import dashboardRouter from "./routes/dashboard.routes.js";
+import subscriptionRouter from "./routes/subscription.routes.js";
 
 // routes declarations
 app.use("/api/v1/users", userRouter);
@@ -33,6 +35,8 @@ app.use("/api/v1/comments", commentRouter);
 app.use("/api/v1/likes", likesRouter);
 app.use("/api/v1/posts", postRouter);
 app.use("/api/v1/playlists", playlistRouter);
+app.use("/api/v1/dashboard", dashboardRouter);
+app.use("/api/v1/subscription", subscriptionRouter);
 // http://localhost:8000/api/v1/usesrs/register
 
 export { app };
