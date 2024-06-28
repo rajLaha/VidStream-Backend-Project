@@ -116,54 +116,58 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
 const getSubscribedChannels = asyncHandler(async (req, res) => {
   const { subscriberId } = req.params;
 
-  if (!subscriberId) {
-    throw new ApiError(400, "Required URL parameter is missing subscriberId");
-  }
+  try {
+    if (!subscriberId) {
+      throw new ApiError(400, "Required URL parameter is missing subscriberId");
+    }
 
-  const isSubscriberExists = await User.exists(
-    new mongoose.Types.ObjectId(subscriberId)
-  );
+    const isSubscriberExists = await User.exists(
+      new mongoose.Types.ObjectId(subscriberId)
+    );
 
-  if (!isSubscriberExists) {
-    throw new ApiError(404, "User not found");
-  }
+    if (!isSubscriberExists) {
+      throw new ApiError(404, "User not found");
+    }
 
-  const subscribedChannels = await Subscription.aggregate([
-    {
-      $match: {
-        subscriber: new mongoose.Types.ObjectId(subscriberId),
-      },
-    },
-    {
-      $lookup: {
-        from: "users",
-        localField: "channel",
-        foreignField: "_id",
-        as: "Channels",
-      },
-    },
-    {
-      $project: {
-        Channels: {
-          userName: 1,
-          fullName: 1,
-          avatar: 1,
-          coverImage: 1,
-          createdAt: 1,
+    const subscribedChannels = await Subscription.aggregate([
+      {
+        $match: {
+          subscriber: new mongoose.Types.ObjectId(subscriberId),
         },
       },
-    },
-  ]);
+      {
+        $lookup: {
+          from: "users",
+          localField: "channel",
+          foreignField: "_id",
+          as: "Channels",
+        },
+      },
+      {
+        $project: {
+          Channels: {
+            userName: 1,
+            fullName: 1,
+            avatar: 1,
+            coverImage: 1,
+            createdAt: 1,
+          },
+        },
+      },
+    ]);
 
-  return res
-    .status(200)
-    .json(
-      new ApiResponse(
-        200,
-        subscribedChannels,
-        "Subscribed Channels fetched succesfully"
-      )
-    );
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          subscribedChannels,
+          "Subscribed Channels fetched succesfully"
+        )
+      );
+  } catch (error) {
+    catchError(error, res, "Fetching Subscribed channels");
+  }
 });
 
 export { toggleSubscription, getUserChannelSubscribers, getSubscribedChannels };
