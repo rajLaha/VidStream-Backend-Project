@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { Video } from "../models/video.models.js";
+import { Views } from "../models/views.models.js";
 import { ApiError, catchError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -153,6 +154,43 @@ const getVideoById = asyncHandler(async (req, res) => {
 
     if (!isVideoExists) {
       throw new ApiError(404, "Video Not Found");
+    }
+
+    const isAlreadyViewed = await Views.exists({
+      video: new mongoose.Types.ObjectId(videoId),
+      viewers: new mongoose.Types.ObjectId(req.user?._id),
+    });
+
+    if (!isAlreadyViewed) {
+      const viewedUser = await Views.create({
+        video: videoId,
+        viewers: req.user?._id,
+      });
+
+      if (!viewedUser) {
+        throw new ApiError(
+          500,
+          "Something went wrong at increase views on video"
+        );
+      }
+
+      const incViews = await Video.updateOne(
+        {
+          _id: videoId,
+        },
+        {
+          $inc: {
+            views: 1,
+          },
+        }
+      );
+
+      if (!incViews) {
+        throw new ApiError(
+          500,
+          "Something went wrong at increase views on video"
+        );
+      }
     }
 
     const video = await Video.aggregate([
