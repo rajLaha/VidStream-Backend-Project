@@ -258,7 +258,7 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 
     if (!(newPassword === confirmPassword)) {
       throw ApiError(
-        404,
+        400,
         "New Password is not matched with the Confirm Password"
       );
     }
@@ -295,7 +295,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
   const { fullName, email } = req.body;
   try {
     if (!fullName && !email) {
-      throw new ApiError(404, "at least one fields is required");
+      throw new ApiError(400, "at least one fields is required");
     }
 
     const user = await User.findById(req.user?._id).select("-password");
@@ -326,7 +326,7 @@ const deleteAvatar = asyncHandler(async (req, res) => {
   try {
     const user = await User.findById(req.user?._id).select("-password");
     if (!user) {
-      throw new ApiError(401, "unauthorized user access");
+      throw new ApiError(404, "User not found");
     }
 
     const avatar = await user.avatar;
@@ -334,7 +334,7 @@ const deleteAvatar = asyncHandler(async (req, res) => {
     const delAvatar = await deleteOnCloudinary(avatar);
 
     if (!delAvatar) {
-      throw new ApiError(401, "can not find avatar");
+      throw new ApiError(404, "Some thing went wrong while deleting avatar");
     }
 
     user.avatar = "";
@@ -354,7 +354,7 @@ const deleteCoverImage = asyncHandler(async (req, res) => {
   try {
     const user = await User.findById(req.user?._id).select("-password");
     if (!user) {
-      throw new ApiError(401, "unauthorized user access");
+      throw new ApiError(404, "User not found");
     }
 
     const coverImage = await user.coverImage;
@@ -362,7 +362,10 @@ const deleteCoverImage = asyncHandler(async (req, res) => {
     const delCoverImage = await deleteOnCloudinary(coverImage);
 
     if (!delCoverImage) {
-      throw new ApiError(401, "can not find Cover Image");
+      throw new ApiError(
+        400,
+        "Something went wrong while deletiing cover image"
+      );
     }
 
     user.coverImage = "";
