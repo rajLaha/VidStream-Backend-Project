@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { User } from "../models/user.models.js";
 import { Video } from "../models/video.models.js";
 import { Subscription } from "../models/subscription.models.js";
 import { ApiError, catchError } from "../utils/apiError.js";
@@ -11,6 +12,14 @@ const getChannelStats = asyncHandler(async (req, res) => {
   try {
     if (!userId) {
       throw new ApiError(400, "Required URL parameter is missing userId");
+    }
+
+    const owner = await User.findById(userId).select(
+      "-password -refreshToken"
+    );
+
+    if (!owner) {
+      throw new ApiError(404, "User not found");
     }
 
     const getChannelTotalViews = await Video.aggregate([
@@ -72,7 +81,7 @@ const getChannelStats = asyncHandler(async (req, res) => {
       .json(
         new ApiResponse(
           200,
-          { totalViews, totalSubscriber, getTotalVideos },
+          { owner, totalViews, totalSubscriber, getTotalVideos },
           "Channel data fetched succesfully"
         )
       );

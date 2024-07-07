@@ -37,10 +37,12 @@ const userSchema = new Schema(
       type: String, // cloudinary url
     },
 
-    watchHIstory: {
-      type: Schema.Types.ObjectId,
-      ref: "Video",
-    },
+    watchHistory: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Video",
+      },
+    ],
 
     password: {
       type: String,
@@ -61,7 +63,7 @@ userSchema.pre("save", async function (next) {
 
   this.password = await bcrypt.hash(this.password, 10);
   next();
-});   
+});
 
 userSchema.methods.isPasswordCorrect = async function (password) {
   return await bcrypt.compare(password, this.password);

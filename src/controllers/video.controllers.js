@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { User } from "../models/user.models.js";
 import { Video } from "../models/video.models.js";
 import { Views } from "../models/views.models.js";
 import { ApiError, catchError } from "../utils/apiError.js";
@@ -191,6 +192,27 @@ const getVideoById = asyncHandler(async (req, res) => {
           "Something went wrong at increase views on video"
         );
       }
+    }
+
+    const user = await User.findById(req.user?._id);
+
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    if (!Array.isArray(user.watchHistory)) {
+      user.watchHistory = [];
+    }
+
+    user.watchHistory.push(videoId);
+
+    const userWatchHistory = await user.save();
+
+    if (!userWatchHistory) {
+      throw new ApiError(
+        500,
+        "Something went wrong while adding video in watch history"
+      );
     }
 
     const video = await Video.aggregate([

@@ -32,21 +32,21 @@ const registeruser = asyncHandler(async (req, res) => {
         (field) => field?.trim() === ""
       )
     ) {
-      throw new ApiError(400, "all fields are required");
+      throw new ApiError(400, "All fields are required");
     }
     if (email.includes(!"@")) {
-      throw new ApiError(400, "please enter a valid email");
+      throw new ApiError(400, "Please enter a valid email");
     }
 
     const existedUserWithEmail = await User.findOne({ email });
     const existedUserWithUserName = await User.findOne({ userName });
 
     if (existedUserWithEmail) {
-      throw new ApiError(409, "user with this email is already exists");
+      throw new ApiError(409, "User with this email is already exists");
     }
 
     if (existedUserWithUserName) {
-      throw new ApiError(409, "This User Name is already take by another one");
+      throw new ApiError(409, "This User Name is already take by another user");
     }
 
     let localAvatarPath;
@@ -68,13 +68,25 @@ const registeruser = asyncHandler(async (req, res) => {
       req.files.coverImage.length > 0
     ) {
       localCoverImagePath = req.files.coverImage[0].path;
+    } else {
+      throw new ApiError(400, "Cover Image is mandatory");
     }
 
     const avatar = await uploadOnCloudinary(localAvatarPath);
     const coverImage = await uploadOnCloudinary(localCoverImagePath);
 
     if (!avatar) {
-      throw new ApiError(400, "Avatar is mandatory");
+      throw new ApiError(
+        500,
+        "Something went wrong while uploading Avatar in cloudinary"
+      );
+    }
+
+    if (!coverImage) {
+      throw new ApiError(
+        500,
+        "Something went wrong while uploading Cover Image in cloudinary"
+      );
     }
 
     const user = await User.create({
@@ -87,7 +99,7 @@ const registeruser = asyncHandler(async (req, res) => {
     });
 
     const createdUser = await User.findById(user._id).select(
-      "-password -refreshTokens"
+      "-password -refreshToken"
     );
 
     if (!createdUser) {
@@ -107,7 +119,7 @@ const loginuser = asyncHandler(async (req, res) => {
 
   try {
     if (!(userName || email)) {
-      throw new ApiError(400, "Username or Email required!");
+      throw new ApiError(400, "Username or Email is required!");
     }
 
     const user = await User.findOne({
@@ -503,7 +515,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     ]);
 
     if (!channel?.length) {
-      throw new ApiError(400, "Channel doesnot exits");
+      throw new ApiError(400, "Channel doesnot exists");
     }
     return res
       .status(200)
@@ -554,9 +566,35 @@ const getWatchHistory = asyncHandler(async (req, res) => {
                 },
               },
             },
+            {
+              $project: {
+                _id: 1,
+                videoFile: 1,
+                thumbnail: 1,
+                title: 1,
+                description: 1,
+                views: 1,
+                createdAt: 1,
+                owner: 1,
+              },
+            },
           ],
         },
       },
+      // {
+      //   $project: {
+      //     watchHistory: {
+      //       _id: 1,
+      //       videoFile: 1,
+      //       thumbnail: 1,
+      //       title: 1,
+      //       description: 1,
+      //       views: 1,
+      //       createdAt: 1,
+      //       owner: 1,
+      //     },
+      //   },
+      // },
     ]);
 
     return res
