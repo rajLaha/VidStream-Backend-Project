@@ -5,6 +5,7 @@ import { uploadOnCloudinary, deleteOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
+import fs from "fs";
 
 const generateAccessAndRefreshToken = async (userID) => {
   try {
@@ -38,17 +39,6 @@ const registeruser = asyncHandler(async (req, res) => {
       throw new ApiError(400, "Please enter a valid email");
     }
 
-    const existedUserWithEmail = await User.findOne({ email });
-    const existedUserWithUserName = await User.findOne({ userName });
-
-    if (existedUserWithEmail) {
-      throw new ApiError(409, "User with this email is already exists");
-    }
-
-    if (existedUserWithUserName) {
-      throw new ApiError(409, "This User Name is already take by another user");
-    }
-
     let localAvatarPath;
     let localCoverImagePath;
 
@@ -70,6 +60,21 @@ const registeruser = asyncHandler(async (req, res) => {
       localCoverImagePath = req.files.coverImage[0].path;
     } else {
       throw new ApiError(400, "Cover Image is mandatory");
+    }
+
+    const existedUserWithEmail = await User.findOne({ email });
+    const existedUserWithUserName = await User.findOne({ userName });
+
+    if (existedUserWithEmail) {
+      fs.unlinkSync(localAvatarPath);
+      fs.unlinkSync(localCoverImagePath);
+      throw new ApiError(409, "User with this email is already exists");
+    }
+
+    if (existedUserWithUserName) {
+      fs.unlinkSync(localAvatarPath);
+      fs.unlinkSync(localCoverImagePath);
+      throw new ApiError(409, "This User Name is already take by another user");
     }
 
     const avatar = await uploadOnCloudinary(localAvatarPath);
