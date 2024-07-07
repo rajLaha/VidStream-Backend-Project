@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { User } from "../models/user.models.js";
 import { Video } from "../models/video.models.js";
 import { Views } from "../models/views.models.js";
+import { Likes } from "../models/likes.models.js";
 import { ApiError, catchError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -371,6 +372,14 @@ const deleteVideo = asyncHandler(async (req, res) => {
     if (!deleteThumbnail) {
       throw new ApiError(401, "Something went wrong while delete video");
     }
+
+    await Likes.deleteMany({
+      video: videoId,
+    });
+
+    await Comment.deleteMany({
+      video: videoId,
+    });
 
     await Video.deleteOne({
       _id: videoId,
