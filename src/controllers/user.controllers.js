@@ -257,7 +257,7 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
     }
 
     if (!(newPassword === confirmPassword)) {
-      throw ApiError(
+      throw new ApiError(
         400,
         "New Password is not matched with the Confirm Password"
       );
