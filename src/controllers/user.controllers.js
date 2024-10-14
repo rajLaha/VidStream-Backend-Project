@@ -294,9 +294,9 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 });
 
 const updateAccountDetails = asyncHandler(async (req, res) => {
-  const { fullName, email } = req.body;
+  const { fullName, userName } = req.body;
   try {
-    if (!fullName && !email) {
+    if (!fullName && !userName) {
       throw new ApiError(400, 'at least one fields is required');
     }
 
@@ -309,8 +309,8 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
       });
     }
 
-    if (email) {
-      user.email = email;
+    if (userName) {
+      user.userName = userName;
       await user.save({
         validateBeforeSave: false,
       });
