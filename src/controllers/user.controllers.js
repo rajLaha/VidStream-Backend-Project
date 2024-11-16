@@ -286,11 +286,84 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 });
 
 const getCurrentUser = asyncHandler(async (req, res) => {
-  return res
-    .status(200)
-    .json(
-      new ApiResponse(200, req.user, 'fetched current user data succesfully')
-    );
+  const userName = req.user.userName;
+
+  try {
+    if (!userName?.trim()) {
+      throw new ApiError(400, 'UserName not found');
+    }
+
+    const channel = await User.aggregate([
+      {
+        $match: {
+          userName: userName?.toLowerCase(),
+        },
+      },
+      {
+        $lookup: {
+          from: 'subscriptions',
+          localField: '_id',
+          foreignField: 'channel',
+          as: 'subscribers',
+        },
+      },
+      {
+        $lookup: {
+          from: 'subscriptions',
+          localField: '_id',
+          foreignField: 'subscriber',
+          as: 'subscribed',
+        },
+      },
+      {
+        $addFields: {
+          subscriberCount: {
+            $size: '$subscribers',
+          },
+          subscribedCount: {
+            $size: '$subscribed',
+          },
+          isSubscribed: {
+            $cond: {
+              if: {
+                $in: [req.user?._id, '$subscribers.subscriber'],
+              },
+              then: true,
+              else: false,
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          fullName: 1,
+          userName: 1,
+          subscriberCount: 1,
+          subscribedCount: 1,
+          isSubscribed: 1,
+          avatar: 1,
+          coverImage: 1,
+          email: 1,
+        },
+      },
+    ]);
+
+    if (!channel?.length) {
+      throw new ApiError(400, 'Channel doesnot exists');
+    }
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          channel[0],
+          'fetched current user data succesfully'
+        )
+      );
+  } catch (error) {
+    catchError(error, res, 'fetch current user');
+  }
 });
 
 const updateAccountDetails = asyncHandler(async (req, res) => {

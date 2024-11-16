@@ -1,25 +1,26 @@
-import mongoose from "mongoose";
-import { User } from "../models/user.models.js";
-import { Video } from "../models/video.models.js";
-import { Views } from "../models/views.models.js";
-import { Likes } from "../models/likes.models.js";
-import { ApiError, catchError } from "../utils/apiError.js";
-import { ApiResponse } from "../utils/apiResponse.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
+import mongoose from 'mongoose';
+import { User } from '../models/user.models.js';
+import { Video } from '../models/video.models.js';
+import { Views } from '../models/views.models.js';
+import { Likes } from '../models/likes.models.js';
+import { Comment } from '../models/comment.models.js';
+import { ApiError, catchError } from '../utils/apiError.js';
+import { ApiResponse } from '../utils/apiResponse.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 import {
   deleteOnCloudinary,
   deleteVideoOnCloudinary,
   getVideoDuration,
   uploadOnCloudinary,
-} from "../utils/cloudinary.js";
+} from '../utils/cloudinary.js';
 
 const getAllVideos = asyncHandler(async (req, res) => {
   const {
     page = 1,
     limit = 10,
     query,
-    sortBy = "createdAt",
-    sortType = "desc",
+    sortBy = 'createdAt',
+    sortType = 'desc',
     userId,
   } = req.query;
 
@@ -41,14 +42,14 @@ const getAllVideos = asyncHandler(async (req, res) => {
       },
       {
         $lookup: {
-          from: "users",
-          localField: "owner",
-          foreignField: "_id",
-          as: "ownerDetails",
+          from: 'users',
+          localField: 'owner',
+          foreignField: '_id',
+          as: 'ownerDetails',
         },
       },
       {
-        $sort: { [sortBy]: sortType === "desc" ? -1 : 1 },
+        $sort: { [sortBy]: sortType === 'desc' ? -1 : 1 },
       },
       {
         $project: {
@@ -79,14 +80,14 @@ const getAllVideos = asyncHandler(async (req, res) => {
     const videos = await Video.aggregatePaginate(videosQuery, options);
 
     if (videos.length == 0) {
-      throw new ApiError(404, "Videos not found");
+      throw new ApiError(404, 'Videos not found');
     }
 
     return res
       .status(200)
-      .json(new ApiResponse(200, videos, "Videos fetched succesfully"));
+      .json(new ApiResponse(200, videos, 'Videos fetched succesfully'));
   } catch (error) {
-    catchError(error, res, "Fetching Videos");
+    catchError(error, res, 'Fetching Videos');
   }
 });
 
@@ -95,7 +96,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
 
   try {
     if (!title) {
-      throw new ApiError(400, "Title is Required");
+      throw new ApiError(400, 'Title is Required');
     }
 
     let localVideoPath;
@@ -108,7 +109,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
     ) {
       localVideoPath = req.files.videoFile[0].path;
     } else {
-      throw new ApiError(400, "Video is mandatory");
+      throw new ApiError(400, 'Video is mandatory');
     }
 
     if (
@@ -118,7 +119,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
     ) {
       localThumbnailPath = req.files.thumbnail[0].path;
     } else {
-      throw new ApiError(400, "Thumbnail is mandatory");
+      throw new ApiError(400, 'Thumbnail is mandatory');
     }
 
     const videoFile = await uploadOnCloudinary(localVideoPath);
@@ -137,9 +138,9 @@ const publishAVideo = asyncHandler(async (req, res) => {
 
     return res
       .status(200)
-      .json(new ApiResponse(200, video, "Video uploaded succesfully"));
+      .json(new ApiResponse(200, video, 'Video uploaded succesfully'));
   } catch (error) {
-    catchError(error, res, "Publish Video");
+    catchError(error, res, 'Publish Video');
   }
 });
 
@@ -147,7 +148,7 @@ const getVideoById = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
   try {
     if (!videoId) {
-      throw new ApiError(400, "Required URL parameter is missing videoId");
+      throw new ApiError(400, 'Required URL parameter is missing videoId');
     }
 
     const isVideoExists = await Video.exists(
@@ -155,7 +156,7 @@ const getVideoById = asyncHandler(async (req, res) => {
     );
 
     if (!isVideoExists) {
-      throw new ApiError(404, "Video Not Found");
+      throw new ApiError(404, 'Video Not Found');
     }
 
     const isAlreadyViewed = await Views.exists({
@@ -172,7 +173,7 @@ const getVideoById = asyncHandler(async (req, res) => {
       if (!viewedUser) {
         throw new ApiError(
           500,
-          "Something went wrong at increase views on video"
+          'Something went wrong at increase views on video'
         );
       }
 
@@ -190,7 +191,7 @@ const getVideoById = asyncHandler(async (req, res) => {
       if (!incViews) {
         throw new ApiError(
           500,
-          "Something went wrong at increase views on video"
+          'Something went wrong at increase views on video'
         );
       }
     }
@@ -198,7 +199,7 @@ const getVideoById = asyncHandler(async (req, res) => {
     const user = await User.findById(req.user?._id);
 
     if (!user) {
-      throw new ApiError(404, "User not found");
+      throw new ApiError(404, 'User not found');
     }
 
     if (!Array.isArray(user.watchHistory)) {
@@ -212,7 +213,7 @@ const getVideoById = asyncHandler(async (req, res) => {
     if (!userWatchHistory) {
       throw new ApiError(
         500,
-        "Something went wrong while adding video in watch history"
+        'Something went wrong while adding video in watch history'
       );
     }
 
@@ -224,25 +225,25 @@ const getVideoById = asyncHandler(async (req, res) => {
       },
       {
         $lookup: {
-          from: "users",
-          localField: "owner",
-          foreignField: "_id",
-          as: "videoOwner",
+          from: 'users',
+          localField: 'owner',
+          foreignField: '_id',
+          as: 'videoOwner',
         },
       },
       {
         $lookup: {
-          from: "comments",
-          localField: "_id",
-          foreignField: "video",
-          as: "comments",
+          from: 'comments',
+          localField: '_id',
+          foreignField: 'video',
+          as: 'comments',
           pipeline: [
             {
               $lookup: {
-                from: "users",
-                localField: "owner",
-                foreignField: "_id",
-                as: "commentOwner",
+                from: 'users',
+                localField: 'owner',
+                foreignField: '_id',
+                as: 'commentOwner',
               },
             },
           ],
@@ -283,9 +284,9 @@ const getVideoById = asyncHandler(async (req, res) => {
 
     return res
       .status(200)
-      .json(new ApiResponse(200, video, "Video Fetched Succesfully"));
+      .json(new ApiResponse(200, video, 'Video Fetched Succesfully'));
   } catch (error) {
-    catchError(error, res, "Fetching video");
+    catchError(error, res, 'Fetching video');
   }
 });
 
@@ -295,21 +296,21 @@ const updateVideo = asyncHandler(async (req, res) => {
 
   try {
     if (!videoId) {
-      throw new ApiError(400, "Required URL parameter is missing videoId");
+      throw new ApiError(400, 'Required URL parameter is missing videoId');
     }
 
     const video = await Video.findById(videoId);
 
     if (!video) {
-      throw new ApiError(404, "Video not foundf");
+      throw new ApiError(404, 'Video not found');
     }
 
     if (video.owner.toString() != req.user._id.toString()) {
-      throw new ApiError(401, "Unauthorized User Access");
+      throw new ApiError(401, 'Unauthorized User Access');
     }
 
     if (!title && !description) {
-      throw new ApiError(404, "At least one field is required");
+      throw new ApiError(404, 'At least one field is required');
     }
 
     if (title && description) {
@@ -340,9 +341,9 @@ const updateVideo = asyncHandler(async (req, res) => {
 
     return res
       .status(200)
-      .json(new ApiResponse(200, video, "Video updated succesfully"));
+      .json(new ApiResponse(200, video, 'Video updated succesfully'));
   } catch (error) {
-    catchError(error, res, "Updating Video");
+    catchError(error, res, 'Updating Video');
   }
 });
 
@@ -350,27 +351,27 @@ const deleteVideo = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
   try {
     if (!videoId) {
-      throw new ApiError(400, "Required URL parameter is missing videoId");
+      throw new ApiError(400, 'Required URL parameter is missing videoId');
     }
     const video = await Video.findById(videoId);
 
     if (!video) {
-      throw new ApiError(404, "Video not found");
+      throw new ApiError(404, 'Video not found');
     }
 
     if (req.user._id.toString() != video.owner.toString()) {
-      throw new ApiError(401, "Unauthorized user access");
+      throw new ApiError(401, 'Unauthorized user access');
     }
 
     const deleteVideo = await deleteVideoOnCloudinary(video.videoFile);
     const deleteThumbnail = await deleteOnCloudinary(video.thumbnail);
 
     if (!deleteVideo) {
-      throw new ApiError(401, "Something went wrong while delete video");
+      throw new ApiError(401, 'Something went wrong while delete video');
     }
 
     if (!deleteThumbnail) {
-      throw new ApiError(401, "Something went wrong while delete video");
+      throw new ApiError(401, 'Something went wrong while delete video');
     }
 
     await Likes.deleteMany({
@@ -387,9 +388,9 @@ const deleteVideo = asyncHandler(async (req, res) => {
 
     return res
       .status(200)
-      .json(new ApiResponse(200, {}, "Video Deleted Succcesfully"));
+      .json(new ApiResponse(200, {}, 'Video Deleted Succcesfully'));
   } catch (error) {
-    catchError(error, res, "Deleting Video");
+    catchError(error, res, 'Deleting Video');
   }
 });
 
@@ -398,17 +399,17 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
 
   try {
     if (!videoId) {
-      throw new ApiError(401, "Required URL parameter is missing videoId");
+      throw new ApiError(401, 'Required URL parameter is missing videoId');
     }
 
     const video = await Video.findById(videoId);
 
     if (!video) {
-      throw new ApiError(404, "Video not found");
+      throw new ApiError(404, 'Video not found');
     }
 
     if (req.user._id.toString() != video.owner.toString()) {
-      throw new ApiError(401, "Unauthorized user access");
+      throw new ApiError(401, 'Unauthorized user access');
     }
 
     if (video.isPublished == true) {
@@ -425,11 +426,11 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
         new ApiResponse(
           200,
           video.isPublished,
-          "Publish status changed succesfully"
+          'Publish status changed succesfully'
         )
       );
   } catch (error) {
-    catchError(error, res, "Toggle publish status");
+    catchError(error, res, 'Toggle publish status');
   }
 });
 
