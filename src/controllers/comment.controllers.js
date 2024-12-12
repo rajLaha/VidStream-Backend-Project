@@ -1,10 +1,10 @@
-import mongoose from "mongoose";
-import { Comment } from "../models/comment.models.js";
-import { Video } from "../models/video.models.js";
-import { ApiError, catchError } from "../utils/apiError.js";
-import { ApiResponse } from "../utils/apiResponse.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
-import { Post } from "../models/post.models.js";
+import mongoose from 'mongoose';
+import { Comment } from '../models/comment.models.js';
+import { Video } from '../models/video.models.js';
+import { ApiError, catchError } from '../utils/apiError.js';
+import { ApiResponse } from '../utils/apiResponse.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import { Post } from '../models/post.models.js';
 
 const getVideoComments = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
@@ -12,7 +12,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
 
   try {
     if (!videoId) {
-      throw new ApiError(400, "Required URL parameter is missing videoId");
+      throw new ApiError(400, 'Required URL parameter is missing videoId');
     }
 
     const isVideoExists = await Video.exists(
@@ -20,7 +20,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
     );
 
     if (!isVideoExists) {
-      throw new ApiError(404, "Video not found");
+      throw new ApiError(404, 'Video not found');
     }
 
     const commentsFetchQuery = Comment.aggregate([
@@ -31,18 +31,18 @@ const getVideoComments = asyncHandler(async (req, res) => {
       },
       {
         $lookup: {
-          from: "videos",
-          localField: "video",
-          foreignField: "_id",
-          as: "video",
+          from: 'videos',
+          localField: 'video',
+          foreignField: '_id',
+          as: 'video',
         },
       },
       {
         $lookup: {
-          from: "users",
-          localField: "owner",
-          foreignField: "_id",
-          as: "ownerDetails",
+          from: 'users',
+          localField: 'owner',
+          foreignField: '_id',
+          as: 'ownerDetails',
         },
       },
       {
@@ -81,14 +81,14 @@ const getVideoComments = asyncHandler(async (req, res) => {
     );
 
     if (comments.length == 0) {
-      throw new ApiError(404, "Comments not found");
+      throw new ApiError(404, 'Comments not found');
     }
 
     return res
       .status(200)
-      .json(new ApiResponse(200, comments, "Comments fetched succesfully"));
+      .json(new ApiResponse(200, comments, 'Comments fetched succesfully'));
   } catch (error) {
-    catchError(error, res, "Fetching Comments");
+    catchError(error, res, 'Fetching Comments');
   }
 });
 
@@ -98,17 +98,17 @@ const addComment = asyncHandler(async (req, res) => {
 
   try {
     if (!videoId) {
-      throw new ApiError(400, "Required URL parameter is missing videoId");
+      throw new ApiError(400, 'Required URL parameter is missing videoId');
     }
 
     const isVideoExists = await Video.findById(videoId);
 
     if (!isVideoExists) {
-      throw new ApiError(404, "Video not found");
+      throw new ApiError(404, 'Video not found');
     }
 
     if (!content) {
-      throw new ApiError(400, "Comment is Required");
+      throw new ApiError(400, 'Comment is Required');
     }
 
     const comment = await Comment.create({
@@ -119,9 +119,9 @@ const addComment = asyncHandler(async (req, res) => {
 
     return res
       .status(200)
-      .json(new ApiResponse(200, comment, "Comment added Succesfully"));
+      .json(new ApiResponse(200, comment, 'Comment added Succesfully'));
   } catch (error) {
-    catchError(error, res, "Adding Comment in Video");
+    catchError(error, res, 'Adding Comment in Video');
   }
 });
 
@@ -131,21 +131,21 @@ const updateComment = asyncHandler(async (req, res) => {
 
   try {
     if (!commentId) {
-      throw new ApiError(400, "Required URL parameter is missing commentId");
+      throw new ApiError(400, 'Required URL parameter is missing commentId');
     }
 
     if (!newComment) {
-      throw new ApiError(400, "Comment is Mandatory");
+      throw new ApiError(400, 'Comment is Mandatory');
     }
 
     const comment = await Comment.findById(commentId);
 
     if (!comment) {
-      throw new ApiError(404, "Comment not found");
+      throw new ApiError(404, 'Comment not found');
     }
 
     if (req.user?._id.toString() != comment.owner.toString()) {
-      throw new ApiError(401, "Unauthorized User Access");
+      throw new ApiError(401, 'Unauthorized User Access');
     }
 
     comment.content = newComment;
@@ -153,9 +153,9 @@ const updateComment = asyncHandler(async (req, res) => {
 
     return res
       .status(200)
-      .json(new ApiResponse(200, cm, "Comment Updated Succesfully"));
+      .json(new ApiResponse(200, cm, 'Comment Updated Succesfully'));
   } catch (error) {
-    catchError(error, res, "Updating video comment");
+    catchError(error, res, 'Updating video comment');
   }
 });
 
@@ -164,16 +164,16 @@ const deleteComment = asyncHandler(async (req, res) => {
 
   try {
     if (!commentId) {
-      throw new ApiError(400, "Required URL parameter is missing commentId");
+      throw new ApiError(400, 'Required URL parameter is missing commentId');
     }
 
     const comment = await Comment.findById(commentId);
     if (!comment) {
-      throw new ApiError(404, "Comment not found");
+      throw new ApiError(404, 'Comment not found');
     }
 
     if (req.user?._id.toString() != comment.owner.toString()) {
-      throw new ApiError(401, "Unauthorized user access");
+      throw new ApiError(401, 'Unauthorized user access');
     }
 
     await Comment.deleteOne({
@@ -182,9 +182,9 @@ const deleteComment = asyncHandler(async (req, res) => {
 
     return res
       .status(200)
-      .json(new ApiResponse(200, {}, "Comment Delete Succesfully"));
+      .json(new ApiResponse(200, {}, 'Comment Delete Succesfully'));
   } catch (error) {
-    catchError(error, res, "Deleting Comment from Video");
+    catchError(error, res, 'Deleting Comment from Video');
   }
 });
 
@@ -194,13 +194,13 @@ const getPostComments = asyncHandler(async (req, res) => {
 
   try {
     if (!postId) {
-      throw new ApiError(401, "Unauthorized Access");
+      throw new ApiError(401, 'Unauthorized Access');
     }
 
     const isPostExists = await Post.exists(new mongoose.Types.ObjectId(postId));
 
     if (!isPostExists) {
-      throw new ApiError(404, "Post not found");
+      throw new ApiError(404, 'Post not found');
     }
 
     const commentsFetchQuery = Comment.aggregate([
@@ -211,18 +211,42 @@ const getPostComments = asyncHandler(async (req, res) => {
       },
       {
         $lookup: {
-          from: "posts",
-          localField: "post",
-          foreignField: "_id",
-          as: "post",
+          from: 'posts',
+          localField: 'post',
+          foreignField: '_id',
+          as: 'post',
         },
       },
       {
         $lookup: {
-          from: "users",
-          localField: "owner",
-          foreignField: "_id",
-          as: "owner",
+          from: 'users',
+          localField: 'owner',
+          foreignField: '_id',
+          as: 'owner',
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          content: 1,
+          post: {
+            _id: 1,
+            content: 1,
+            image: 1,
+            owner: 1,
+            createdAt: 1,
+            updatedAt: 1,
+          },
+          owner: {
+            _id: 1,
+            userName: 1,
+            email: 1,
+            fullName: 1,
+            avatar: 1,
+            coverImage: 1,
+            createdAt: 1,
+            updatedAt: 1,
+          },
         },
       },
     ]);
@@ -238,14 +262,14 @@ const getPostComments = asyncHandler(async (req, res) => {
     );
 
     if (comments.length == 0) {
-      throw new ApiError(404, "Comments not found");
+      throw new ApiError(404, 'Comments not found');
     }
 
     return res
       .status(200)
-      .json(new ApiResponse(200, comments, "Comments fetched succesfully"));
+      .json(new ApiResponse(200, comments, 'Comments fetched succesfully'));
   } catch (error) {
-    catchError(error, res, "Fetching Comments");
+    catchError(error, res, 'Fetching Comments');
   }
 });
 
@@ -255,17 +279,17 @@ const addPostComment = asyncHandler(async (req, res) => {
 
   try {
     if (!postId) {
-      throw new ApiError(400, "Required URL parameter is missing postId");
+      throw new ApiError(400, 'Required URL parameter is missing postId');
     }
 
     if (!content) {
-      throw new ApiError(400, "Comment is Mandatory");
+      throw new ApiError(400, 'Comment is Mandatory');
     }
 
     const isPostExists = await Post.findById(postId);
 
     if (!isPostExists) {
-      throw ApiError(404, "Post not found");
+      throw ApiError(404, 'Post not found');
     }
 
     const comment = await Comment.create({
@@ -276,9 +300,9 @@ const addPostComment = asyncHandler(async (req, res) => {
 
     return res
       .status(200)
-      .json(new ApiResponse(200, comment, "Comment added Succesfully"));
+      .json(new ApiResponse(200, comment, 'Comment added Succesfully'));
   } catch (error) {
-    catchError(error, res, "Adding Comment in Post");
+    catchError(error, res, 'Adding Comment in Post');
   }
 });
 
@@ -288,21 +312,21 @@ const updatePostComment = asyncHandler(async (req, res) => {
 
   try {
     if (!commentId) {
-      throw new ApiError(400, "Requierd URL paramater is missing commentId");
+      throw new ApiError(400, 'Requierd URL paramater is missing commentId');
     }
 
     if (!newComment) {
-      throw new ApiError(400, "Comment is Mandatory");
+      throw new ApiError(400, 'Comment is Mandatory');
     }
 
     const comment = await Comment.findById(commentId);
 
     if (!comment) {
-      throw new ApiError(404, "Comment not found");
+      throw new ApiError(404, 'Comment not found');
     }
 
     if (req.user?._id.toString() != comment.owner.toString()) {
-      throw new ApiError(401, "Unauthorized User Access");
+      throw new ApiError(401, 'Unauthorized User Access');
     }
 
     comment.content = newComment;
@@ -310,9 +334,9 @@ const updatePostComment = asyncHandler(async (req, res) => {
 
     return res
       .status(200)
-      .json(new ApiResponse(200, cm, "Comment Updated Succesfully"));
+      .json(new ApiResponse(200, cm, 'Comment Updated Succesfully'));
   } catch (error) {
-    catchError(error, res, "Updating Post Comment");
+    catchError(error, res, 'Updating Post Comment');
   }
 });
 
@@ -321,17 +345,17 @@ const deletePostComment = asyncHandler(async (req, res) => {
 
   try {
     if (!commentId) {
-      throw new ApiError(400, "Required URL paramater is missing commentId");
+      throw new ApiError(400, 'Required URL paramater is missing commentId');
     }
 
     const comment = await Comment.findById(commentId);
 
     if (!comment) {
-      throw new ApiError(404, "Comment not found");
+      throw new ApiError(404, 'Comment not found');
     }
 
     if (req.user?._id.toString() != comment.owner.toString()) {
-      throw new ApiError(401, "Unauthorized user access");
+      throw new ApiError(401, 'Unauthorized user access');
     }
 
     await Comment.deleteOne({
@@ -340,9 +364,9 @@ const deletePostComment = asyncHandler(async (req, res) => {
 
     return res
       .status(200)
-      .json(new ApiResponse(200, {}, "Comment Delete Succesfully"));
+      .json(new ApiResponse(200, {}, 'Comment Delete Succesfully'));
   } catch (error) {
-    catchError(error, res, "Deleting Post Comment");
+    catchError(error, res, 'Deleting Post Comment');
   }
 });
 
